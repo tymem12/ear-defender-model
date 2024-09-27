@@ -1,3 +1,0 @@
-[submodule "models/wav2vec"]
-	path = models/wav2vec
-	url = https://github.com/TakHemlata/SSL_Anti-spoofing.git
