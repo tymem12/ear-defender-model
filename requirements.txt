@@ -3,3 +3,6 @@ librosa==0.9.1
 tensorboardX==2.5
 pandas
 asteroid-filterbanks
+fastapi
+uvicorn
+python-dotenv

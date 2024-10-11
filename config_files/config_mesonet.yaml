@@ -1,5 +1,5 @@
 checkpoint:
-  path: "weights.pth"
+  path: "pretrained/weights.pth"
 data:
   seed: 42
 model:

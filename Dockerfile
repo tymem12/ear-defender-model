@@ -20,7 +20,7 @@ RUN conda create -n SSL_Spoofing python=3.7 -y
 # Activate the environment and install dependencies
 # Install PyTorch and other dependencies
 RUN /bin/bash -c "source activate SSL_Spoofing && \
-    pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html"
+    pip install torch==1.11.0+cu113 torchvision torchaudio==0.11.0 -f https://download.pytorch.org/whl/torch_stable.html"
 
 # Copy the model1 directory containing fairseq into the container
 COPY . /app
@@ -37,3 +37,11 @@ WORKDIR /app
 
 # Set the environment to activate the SSL_Spoofing environment on container start
 CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && exec bash"]
+
+
+# YOU NEED TO ADD LOADING DOTEN
+# from dotenv import load_dotenv
+# import os
+
+# # Load environment variables from the .env file
+# load_dotenv(
