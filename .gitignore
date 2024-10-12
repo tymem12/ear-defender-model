@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+xlsr2_300m.pt
+pretrained/Best_LA_model_for_DF.pth
