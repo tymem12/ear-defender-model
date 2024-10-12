@@ -11,7 +11,7 @@
 
 # file that returns the correct model based on the parameters
 
-
+import os
 import yaml
 from typing import Dict
 from model_module.models.meso import meso_net
@@ -27,15 +27,9 @@ def mesonet_postprocessing(batch_pred):
 
 def wav2vec_postprocessing(batch_pred):
     # softmax = torch.nn.Softmax(dim=0)  # Softmax along the first dimension (for each tuple)
-    #elem = [(scor_1, scor2) for (scor_1, scor2) in batch_pred]
-    
-    # # Apply softmax to each tensor in batch_pred and return as tuples
-    # scores = np.array([sco_1[1] for sco_1 in batch_pred])
-    # indices = np.argsort(scores, kind='mergesort')
-    # thresholds = np.concatenate((np.atleast_1d(scores[indices[0]] - 0.001), scores[indices]))  # Thresholds are the sorted scores
-
-    # probs = [tuple(softmax(torch.tensor(pred)) for pred in batch_pred]
-    return batch_pred
+    elements = [ scor[1] for scor in batch_pred]
+    label = [(tensor > float(os.getenv('WAV2VEC_EXPERIMENTAL_THRESHOLD'))).int()for tensor in elements ]
+    return label
 
 def get_model(model_name: str, config: Dict, device: str):
     if model_name == "wav2vec":

@@ -4,15 +4,20 @@ from datetime import datetime
 from model_module.evaluate_dataset import predict
 import os
 import json
+from typing import List
 
 
-def predict_audios(analysis_id: UUID, selected_model: str, file_paths: list[str]):
+def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str]):
     # get mo
 
     start_analysis = datetime.now().isoformat()
+    return_list = []
     
     for link in file_paths:
-        _,segments_list, labels = predict(selected_model, [link])
+        return_dict =  {'file_path' : link}        
+
+        files ,segments_list, labels = predict(selected_model, [link])
+
         # update database to load to the specific document 
 
         if len(segments_list) != len(labels):
@@ -20,15 +25,19 @@ def predict_audios(analysis_id: UUID, selected_model: str, file_paths: list[str]
         
         # Prepare modelPredictions
         model_predictions = [{"segmentNumber": segment, "label": label} for segment, label in zip(segments_list, labels)]
+        return_dict['model_predictions'] = model_predictions
+        return_list.append(return_dict)
+
+            
+    return return_list
+        # connector_create_predictions(link, selected_model, model_predictions)
         
-        # Prepare the payload for the request
-        
 
 
 
 
 
-def connector_create_predictions(link: str, model: str, model_predictions: list[dict]):
+def connector_create_predictions(link: str, model: str, model_predictions: List[dict]):
     # Ensure the length of segments and labels match
     
     payload = {
@@ -38,7 +47,7 @@ def connector_create_predictions(link: str, model: str, model_predictions: list[
             "modelPredictions": model_predictions
         }
     # Get the URL from environment variables
-    connector_url = os.getenv('CONNECTOR_URL')
+    connector_url = os.getenv('CONNECTOR_URL') + '/predictions'
     
     if connector_url is None:
         raise ValueError("CONNECTOR_URL environment variable is not set.")
@@ -55,10 +64,9 @@ def connector_create_predictions(link: str, model: str, model_predictions: list[
 
 
 
-# to finisz
 def connector_update_analysis(analysis_id: str, status: str, start_timestamp: str, duration: int, 
                               starting_point: str, depth: int, max_files: int, model: str, 
-                              file_count: int, predictions: list[dict]):
+                              file_count: int, predictions: List[dict]):
     """
     Sends an update to the connector with analysis results.
 

@@ -5,11 +5,12 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import librosa
+from typing import List
 
 # this is the mostly correct dataset
 
 class Dataset_Custom(Dataset):
-    def __init__(self, list_IDs, base_dir=os.getenv('AUDIO_STORAGE')):
+    def __init__(self, list_IDs = List[str], base_dir=os.getenv('AUDIO_STORAGE')):
         '''
         self.list_IDs : list of strings (each string: utt key),
         '''
