@@ -1,0 +1,3 @@
+[submodule "my_app/model_module/models/wav2vec"]
+	path = my_app/model_module/models/wav2vec
+	url = https://github.com/TakHemlata/SSL_Anti-spoofing
