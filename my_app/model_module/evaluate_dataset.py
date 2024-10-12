@@ -18,7 +18,7 @@ def predict(model_name: str, file_paths : list[str]):
 
     for file_path in file_paths:
         dataset = Dataset_Custom(list_IDs=file_path)
-        data_loader = DataLoader(dataset, batch_size=14, shuffle=False, drop_last=False) 
+        data_loader = DataLoader(dataset, batch_size=10, shuffle=False, drop_last=False) 
         for batch_x, (file_name, idx) in data_loader:
             
             
@@ -39,11 +39,5 @@ def predict(model_name: str, file_paths : list[str]):
     return fname_list, fragment_list, label_list
 
 
-
-
-
-
-    # TU SIĘ ZACZYNA TERAZ PRACA: 
-    # NIE TWORZYMY DATASETU Z CAŁEGO ZBIORU ALE PLIK BY PLUK
 
     
