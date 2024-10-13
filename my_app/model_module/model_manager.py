@@ -3,11 +3,11 @@ import yaml
 import os
 import torch
 import torch.nn as nn
-from model_module.models.wav2vec.model import Model
-from model_module.models.meso import meso_net
+from my_app.model_module.models.wav2vec.model import Model
+from my_app.model_module.models.meso import meso_net
 
 # later code below would need to change
-from model_module.models_manager import mesonet_postprocessing, wav2vec_postprocessing
+from my_app.model_module.models_manager import mesonet_postprocessing, wav2vec_postprocessing
 
 
 class ModelManager():

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from uuid import UUID
 from typing import List
-from app import controller
+from my_app.app_module import controller
 
 app = FastAPI()
 

@@ -1,7 +1,7 @@
 from uuid import UUID
 import requests
 from datetime import datetime
-from model_module.evaluate_dataset import predict
+from my_app.model_module.evaluate_dataset import predict
 import os
 import json
 from typing import List

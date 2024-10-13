@@ -4,8 +4,8 @@ import os
 from typing import Sequence, Dict
 import torch
 from torch.utils.data import DataLoader 
-from model_module.test_dataset import Dataset_Custom
-from model_module.models_manager import get_model
+from my_app.model_module.test_dataset import Dataset_Custom
+from my_app.model_module.models_manager import get_model
 
 
 def predict_audios(model_name: str, id_list: Sequence, parameters, base_dir: str, output_csv: str, save_func):

@@ -14,8 +14,8 @@
 import os
 import yaml
 from typing import Dict
-from model_module.models.meso import meso_net
-from model_module.models.wav2vec.model import Model
+from my_app.model_module.models.meso import meso_net
+from my_app.model_module.models.wav2vec.model import Model
 import torch.nn as nn
 import torch
 import numpy as np

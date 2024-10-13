@@ -5,7 +5,7 @@ from FakeAVCeleb repository - https://github.com/DASH-Lab/FakeAVCeleb/blob/main/
 import torch
 import torch.nn as nn
 
-from model_module.models.meso import frontends
+from my_app.model_module.models.meso import frontends
 
 
 class MesoInception4(nn.Module):

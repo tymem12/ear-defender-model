@@ -1,8 +1,8 @@
 from torch.utils.data import DataLoader 
 import torch
 from typing import List
-from model_module.model_manager import ModelManager
-from model_module.test_dataset import Dataset_Custom
+from my_app.model_module.model_manager import ModelManager
+from my_app.model_module.test_dataset import Dataset_Custom
 
 def predict(model_name: str, file_paths : List[str]):
     print('predict')

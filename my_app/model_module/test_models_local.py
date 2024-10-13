@@ -1,9 +1,9 @@
 import os
 import csv
-from model_module.predict_labels import load_config, predict_audios, save_meso_results, save_wav2vec_results
+from my_app.model_module.predict_labels import load_config, predict_audios, save_meso_results, save_wav2vec_results
 import os
 from pydub import AudioSegment
-from model_module.models.wav2vec.eval_metrics_DF import compute_eer 
+from my_app.model_module.models.wav2vec.eval_metrics_DF import compute_eer 
 import numpy as np
 from sklearn.metrics import roc_curve
 # Define the path to the folder containing your files
