@@ -60,14 +60,14 @@ def create_results_file(input_csv, base_dir,meso_output_csv = '../meso_deep_voic
     # wav2vec_output_csv = '../wav2vec_fake_audio_fake.csv'
     # meso_output_finetuned = '../meso_ft_fake_audio_fake.csv'
 
-    print('start predicting meso')
-    predict_audios(model_meso, list_IDs, meso_config, base_dir, meso_output_csv, save_meso_results)
+    # print('start predicting meso')
+    # predict_audios(model_meso, list_IDs, meso_config, base_dir, meso_output_csv, save_meso_results)
 
-    print('start predicting wav2vec')
-    predict_audios(model_wav, list_IDs, wav2vec_config, base_dir, wav2vec_output_csv, save_wav2vec_results)
+    # print('start predicting wav2vec')
+    # predict_audios(model_wav, list_IDs, wav2vec_config, base_dir, wav2vec_output_csv, save_wav2vec_results)
 
-    print('start predicting meso_finetuned')
-    predict_audios(model_meso, list_IDs, meso_finetuned , base_dir, meso_output_finetuned, save_meso_results)
+    # print('start predicting meso_finetuned')
+    # predict_audios(model_meso, list_IDs, meso_finetuned , base_dir, meso_output_finetuned, save_meso_results)
 
 
 
@@ -90,6 +90,7 @@ def cal_sum_time(folder_path):
 
 
 def calulate_threshold_wav2vec():
+
     spoof_file_path = '../wav2vec_results_fake.csv'
     scores_spoof = []
     real_file_path = '../wav2vec_results_real.csv'
@@ -98,6 +99,10 @@ def calulate_threshold_wav2vec():
     real_file_path_1 = '../wav2vec_results_in_the_wild_real.csv'
 
 
+    # folder = 'test_files'
+    # print('wav2vec  deep voice')
+    # spoof_file_path_1 = f'{folder}/deep_voice/wav2vec_deep_voice_fake.csv'
+    # print(metrics.calculate_eer_from_scores_csv([], [f'{folder}/deep_voice/wav2vec_deep_voice_fake.csv']))
     output_csv = '../meso_results_in_the_wild_fake.csv'
 
     # with open(spoof_file_path, mode='r') as file:

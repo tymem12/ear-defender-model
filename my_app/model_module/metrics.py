@@ -1,8 +1,9 @@
 import csv
 import numpy as np
-from model_module.models.wav2vec.eval_metrics_DF import compute_eer
+from typing import List
+from my_app.model_module.models.wav2vec.eval_metrics_DF import compute_eer
 
-def calculate_eer_from_scores(scores_spoof: list[float], scores_real: list[float]):
+def calculate_eer_from_scores(scores_spoof: List[float], scores_real: List[float]):
     scores_spoof = np.array(scores_spoof)
     scores_real = np.array(scores_real)
 
@@ -10,7 +11,7 @@ def calculate_eer_from_scores(scores_spoof: list[float], scores_real: list[float
     print(f"EER: {eer}   threshold: {threshold}")
     return eer, threshold
 
-def calculate_eer_from_scores_csv(spoof_links: list[str], real_links: list[str]):
+def calculate_eer_from_scores_csv(spoof_links: List[str], real_links: List[str]):
     scores_spoof = []
     scores_real = []
     for spoof_link in spoof_links:
@@ -30,7 +31,7 @@ def calculate_eer_from_scores_csv(spoof_links: list[str], real_links: list[str])
     return calculate_eer_from_scores(scores_spoof, scores_real)
 
 
-def calculate_eer_from_labels(model_predictions: list[int], actual_labels: list[int]):
+def calculate_eer_from_labels(model_predictions: List[int], actual_labels: List[int]):
     predictions = np.array(model_predictions)
     labels = np.array(actual_labels)
     
@@ -59,7 +60,7 @@ def calculate_eer_from_labels(model_predictions: list[int], actual_labels: list[
     
     return eer
 
-def calculate_eer_from_labels(spoof_links: list[str], real_links: list[str]):
+def calculate_eer_from_labels_csv(spoof_links: List[str], real_links: List[str]):
     predictions = []
     labels = []
     for spoof_link in spoof_links:
@@ -67,7 +68,7 @@ def calculate_eer_from_labels(spoof_links: list[str], real_links: list[str]):
             reader = csv.reader(file)
             next(reader)  # Skip header row
             for row in reader:
-                predictions.append(row[3])
+                predictions.append(int(row[3]))
                 labels.append(0)
 
     for real_link in real_links:
@@ -75,10 +76,10 @@ def calculate_eer_from_labels(spoof_links: list[str], real_links: list[str]):
             reader = csv.reader(file)
             next(reader)  # Skip header row
             for row in reader:
-                predictions.append(row[3])
+                predictions.append(int(row[3]))
                 labels.append(1)
     
-    return calculate_eer_from_scores(predictions, labels)
+    return calculate_eer_from_labels(predictions, labels)
     
 
 

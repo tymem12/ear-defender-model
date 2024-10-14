@@ -12,6 +12,10 @@ class AnalysisRequest(BaseModel):
     model: str
     filePaths: List[str]
 
+
+class StorageContent(BaseModel):
+    filePaths: List[str]
+
 @app.post("/model")
 async def analyze_files(request: AnalysisRequest):
     # Extract the received data
@@ -24,13 +28,14 @@ async def analyze_files(request: AnalysisRequest):
     return results
 
 
-    # Example: Return a response with the data received
-    # return {
-    #     "message": "Analysis started",
-    #     "analysis_id": analysis_id,
-    #     "model": selected_model,
-    #     "filePaths": file_paths
-    # }
+@app.post("/storage")
+async def analyze_files(request: StorageContent):
+    # Extract the received data
+    file_paths = request.filePaths
+
+    # You can add processing logic here
+    results = controller.storage_content(file_paths)
+    return results
 
 # For running the FastAPI application
 if __name__ == "__main__":

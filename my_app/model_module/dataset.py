@@ -6,11 +6,11 @@ import torch.nn as nn
 from torch import Tensor
 import librosa
 from typing import List
-
+import logging
 # this is the mostly correct dataset
 
 class Dataset_Custom(Dataset):
-    def __init__(self, list_IDs = List[str], base_dir=os.getenv('AUDIO_STORAGE')):
+    def __init__(self, list_IDs : List[str], base_dir: str):
         '''
         self.list_IDs : list of strings (each string: utt key),
         '''
@@ -29,6 +29,16 @@ class Dataset_Custom(Dataset):
         # print('PREPARE DATASSET')
         for utt_id in self.list_IDs:
             audio_path = os.path.join(self.base_dir, utt_id)
+
+
+            if not os.path.exists(audio_path):
+                logging.info(f"File {audio_path} doesn't exist.")
+
+                # Get the number of files in the base directory and print
+                num_files = len([f for f in os.listdir(self.base_dir) if os.path.isfile(os.path.join(self.base_dir, f))])
+                logging.info(f"Number of files in the folder '{self.base_dir}': {num_files}")
+                continue 
+
             X, fs = librosa.load(audio_path, sr=16000)
 
             # Calculate how many full chunks we can make from the audio

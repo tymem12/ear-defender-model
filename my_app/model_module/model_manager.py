@@ -1,19 +1,21 @@
 from typing import Dict
 import yaml
 import os
+import logging
 import torch
 import torch.nn as nn
 from my_app.model_module.models.wav2vec.model import Model
 from my_app.model_module.models.meso import meso_net
 
 # later code below would need to change
-from my_app.model_module.models_manager import mesonet_postprocessing, wav2vec_postprocessing
+from my_app.model_module.models_utils import mesonet_postprocessing, wav2vec_postprocessing
 
 
 class ModelManager():
     __model_name :str = None
     __config_file: str = None
     __postprocessing_fun = None
+    __configuration : Dict = None
 
     def __init__(self, model_name: str):
         self.model_name = model_name
@@ -24,8 +26,8 @@ class ModelManager():
 
         if self.model_name == "wav2vec":
             self.__config_file = os.getenv('WAV2VEC_CONFIG') if not self.__config_file else self.__config_file
-            self.__postprocessing_fun = wav2vec_postprocessing
             config = load_config(self.__config_file)
+            self.__postprocessing_fun = wav2vec_postprocessing(config['model']['threshold'])
             parameters = config['model']['parameters']
             checkpoint_path = config['checkpoint']['path']
             model = Model(args = parameters,device = device)
@@ -50,7 +52,7 @@ class ModelManager():
                 frontend_algorithm=parameters.get("frontend_algorithm", "lfcc"),
                 device=device,
             )
-            model.load_state_dict(torch.load(checkpoint_path))
+            model.load_state_dict(torch.load(checkpoint_path,map_location=device))
             model = model.to(device)
             return model # mesonet_postprocessing
         else:
@@ -63,7 +65,10 @@ class ModelManager():
 
     @model_name.setter
     def model_name(self, model_name: str):
-        self.__model_name = model_name
+        if model_name != self.__model_name:
+            self.__model_name = model_name
+        self.__config_file = None
+
 
     @property
     def config_file(self) -> str:
@@ -72,7 +77,11 @@ class ModelManager():
 
     @config_file.setter
     def config_file(self, config_file: str):
-        self.__config_file = config_file
+        config = load_config(self.config_file)
+        if config['model']['name'] != self.model_name:
+            logging.info(f'configuration does not match the model name: {self.__model_name}')
+        else:
+            self.__config_file = config_file
     
     @property
     def postprocessing_fun(self):
