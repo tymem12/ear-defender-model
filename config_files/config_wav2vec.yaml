@@ -6,3 +6,4 @@ model:
   name: wav2vec
   parameters:
     foo: 1
+  threshold: -3.2698796
