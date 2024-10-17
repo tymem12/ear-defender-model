@@ -1,6 +1,5 @@
 import os
 import csv
-from my_app.model_module.predict_labels import load_config, predict_audios, save_meso_results, save_wav2vec_results
 import os
 from pydub import AudioSegment
 from my_app.model_module.models.wav2vec.eval_metrics_DF import compute_eer 
@@ -33,41 +32,6 @@ def create_test_file(output_csv, folder_path):
                 writer.writerow([filename, 0])
 
     print(f"CSV file '{output_csv}' has been created with file names and target values.")
-
-
-def create_results_file(input_csv, base_dir,meso_output_csv = '../meso_deep_voice_fake.csv', wav2vec_output_csv = '../wav2vec_deep_voice_fake.csv', meso_output_finetuned = '../meso_ft_deep_voice_fake.csv'  ):
-
-    # Read the file names from the CSV file
-    list_IDs = []
-    with open(input_csv, mode='r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header row
-
-        # list_IDs = [row[0] for row in reader if row[2] == 'bona-fide']
-        list_IDs = [row[0] for row in reader]
-        # for row in reader:
-        #     if row[2] == 'spoof':
-        #         list_IDs.append(row[0])  # Append only the file name
-
-    model_meso = 'mesonet'
-    model_wav = 'wav2vec'
-    meso_config = load_config('config_files/config_mesonet.yaml')
-    wav2vec_config = load_config('config_files/config_wav2vec.yaml')
-    meso_finetuned = load_config('config_files/config_mesonet_finetuned.yaml')
-
-
-    # meso_output_csv = '../meso_fake_audio_fake.csv'
-    # wav2vec_output_csv = '../wav2vec_fake_audio_fake.csv'
-    # meso_output_finetuned = '../meso_ft_fake_audio_fake.csv'
-
-    # print('start predicting meso')
-    # predict_audios(model_meso, list_IDs, meso_config, base_dir, meso_output_csv, save_meso_results)
-
-    # print('start predicting wav2vec')
-    # predict_audios(model_wav, list_IDs, wav2vec_config, base_dir, wav2vec_output_csv, save_wav2vec_results)
-
-    # print('start predicting meso_finetuned')
-    # predict_audios(model_meso, list_IDs, meso_finetuned , base_dir, meso_output_finetuned, save_meso_results)
 
 
 
@@ -206,7 +170,6 @@ if __name__ == '__main__':
     # output_csv = 'test_data_real.csv'
 
     # cal_sum_time(base_dir)
-    create_results_file(output_csv)
     create_test_file('fake_audio_data.csv', )
     # calulate_threshold_wav2vec()
     # calculate_eer_binary()
