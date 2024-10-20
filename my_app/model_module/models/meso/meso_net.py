@@ -124,7 +124,7 @@ class FrontendMesoInception4(MesoInception4):
 
         frontend_name = kwargs.get("frontend_algorithm", [])
         self.frontend = frontends.get_frontend(frontend_name)
-        print(f"Using {frontend_name} frontend")
+        # print(f"Using {frontend_name} frontend")
 
     def forward(self, x):
         x = self.frontend(x)

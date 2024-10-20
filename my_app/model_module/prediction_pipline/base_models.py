@@ -9,7 +9,7 @@ class Model(ABC):
         else:
             self.config_path = config_path
         self.initialization_strategy = initialization_strategy
-        self.initialize_model()
+        self.initialized_model = self.initialize_model()
 
     @abstractmethod
     def get_default_config(self):
@@ -19,7 +19,7 @@ class Model(ABC):
     def initialize_model(self):
         """Delegate the initialization to the strategy."""
         if self.initialization_strategy:
-            self.initialization_strategy.initialize(self.config_path)
+            return self.initialization_strategy.initialize(self.config_path)
         else:
             raise ValueError("Initialization strategy is not provided.")
 
@@ -34,7 +34,9 @@ class MesonetModel(Model):
         return 'config_files/config_mesonet.yaml'
 
     def predict(self, input_data):
-        return f"ModelA predictions for {input_data}"
+
+        print(f"ModelA predictions for {input_data}")
+        return self.initialized_model(input_data)
     
 
 
@@ -43,4 +45,9 @@ class Wav2wec(Model):
         return 'config_files/config_wav2vec.yaml'
 
     def predict(self, input_data):
-        return f"ModelB predictions for {input_data}"
+        print(f"ModelB predictions for {input_data}")
+        return self.initialized_model(input_data)
+    
+    def get_threshold_value(self):
+        return self.initialization_strategy.config['model']['threshold']
+

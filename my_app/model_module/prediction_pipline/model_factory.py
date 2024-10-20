@@ -1,6 +1,7 @@
-from my_app.model_module.models_manager import base_models as bm
-from my_app.model_module.models_manager import postprocessing_strategy as ps
-from my_app.model_module.models_manager import initialization_strategy as init_strat
+from my_app.model_module.prediction_pipline import base_models as bm
+from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
+from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
+from my_app.model_module.dataset import Dataset_Custom
 
 
 class ModelFactory:
@@ -17,26 +18,26 @@ class ModelFactory:
 
 
 class PredictionPipeline:
-    def __init__(self, model_name, config_path=None):
+    def __init__(self, model_name, config_path=None, return_labels = True, return_scores = True):
+        self.return_labels = return_labels
+        self.return_scores = return_scores
         self.model = ModelFactory.create_model(model_name, config_path)
         self.postprocessing_strategy = self._get_postprocessing_strategy(model_name)
+        self.model.initialized_model.eval()
 
     def _get_postprocessing_strategy(self, model_name):
-        if model_name == 'modelA':
-            return ps.Wav2vecPostprocessing()
-        elif model_name == 'modelB':
+        if model_name == 'wav2vec':
+            return ps.Wav2vecPostprocessing(self.model.get_threshold_value())
+        elif model_name == 'mesonet':
             return ps.MesoPostprocessing()
         else:
             raise ValueError(f"Unknown postprocessing for model: {model_name}")
         
 
-    def predict(self, input_data, return_labels = True):
+    def predict(self, input_data):
+
         prediction = self.model.predict(input_data)
-        if return_labels:
-            postprocessed_output = self.postprocessing_strategy.process(prediction)
-            return postprocessed_output
-        return prediction
+        model_output = self.postprocessing_strategy.process(prediction, self.return_scores, self.return_labels)
+        return model_output
     
-    def apply_postprocessing(self, prediction):
-        postprocessed_output = self.postprocessing_strategy.process(prediction)
-        return postprocessed_output
+

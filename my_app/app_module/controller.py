@@ -3,6 +3,8 @@ import requests
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
 from my_app.model_module.model_manager import ModelManager
+from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline
+
 import os
 import json
 from typing import List, Dict
@@ -13,13 +15,16 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
 
     start_analysis = datetime.now().isoformat()
     predictions = []
-    model_manager = ModelManager(selected_model)
+    # model_manager = ModelManager(selected_model)
 
+
+
+    prediction_pipline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     
     for link in file_paths:
         # return_dict =  {'file_path' : link}        
 
-        files ,segments_list, _, labels = predict(model_manager, [link])
+        files ,segments_list, labels = predict(prediction_pipline, [link])
 
         # update database to load to the specific document 
 
@@ -44,20 +49,9 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
     
     status = 'FINISHED'
     end_analysis = datetime.now().isoformat()
-    start_dt = datetime.fromisoformat(start_analysis)
-    end_dt = datetime.fromisoformat(end_analysis)
-    duration = end_dt - start_dt
-    duration = duration.total_seconds()
-    inputParams =  {
-        "startingPoint": "example-url",
-	    "depth": 3,
-	    "maxFiles": 100,
-	    "model": "example-model1"
-	},
+
     file_count = len(predictions)
-    # connector_update_analysis(analysis_id = analysis_id, status = status, start_timestamp = start_analysis, duration = duration, 
-    #                           starting_point: str, depth: int, max_files: int, model: str, 
-    #                           file_count: int, predictions: List[Dict]):
+    # connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions)
 
 
     # return return_list
@@ -107,53 +101,24 @@ def connector_create_predictions(payload: Dict):
 
 
 
-def connector_update_analysis(analysis_id: str, status: str, start_timestamp: str, duration: int, 
-                              starting_point: str, depth: int, max_files: int, model: str, 
-                              file_count: int, predictions: List[Dict]):
-    """
-    Sends an update to the connector with analysis results.
-
-    :param analysis_id: Unique ID of the analysis
-    :param status: Current status of the analysis (DOWNLOADING/PROCESSING/FINISHED)
-    :param start_timestamp: Timestamp of when the analysis started (ISO 8601 format)
-    :param duration: Duration of the analysis in seconds
-    :param starting_point: Initial URL of the scraper
-    :param depth: Depth of the scraper's search
-    :param max_files: Maximum number of files the scraper can scrape
-    :param model: Model used for analysis
-    :param file_count: Number of files analyzed
-    :param predictions: List of predictions for each file, with each entry being a dict
-                        that contains link, timestamp, model, and modelPredictions
-    """
-
-    # Prepare inputParams
-    input_params = {
-        "startingPoint": starting_point,
-        "depth": depth,
-        "maxFiles": max_files,
-        "model": model
-    }
+def connector_update_analysis(analysis_id: str, status: str, finishTimestamp: str, predictionResults : List[Dict]):
 
     # Prepare the payload for the request
     payload = {
-        "id": analysis_id,
         "status": status,
-        "timestamp": start_timestamp,  # ISO 8601 timestamp for when the analysis started
-        "duration": duration,
-        "inputParams": input_params,
-        "fileCount": file_count,
-        "predictions": predictions
+        "finishTimestamp": finishTimestamp,  # ISO 8601 timestamp for when the analysis started
+        "predictionResults": predictionResults
     }
 
     # Get the URL from environment variables
-    connector_url = os.getenv('CONNECTOR_ADDRESSL') + ':' + os.getenv('CONNECTOR_PORT') 
+    connector_url = os.getenv('CONNECTOR_ADDRESSL') + ':' + os.getenv('CONNECTOR_PORT') + '/analyses/' + analysis_id + '/'
     
     if connector_url is None:
         raise ValueError("CONNECTOR_URL environment variable is not set.")
     
     # Send the request
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(connector_url, data=json.dumps(payload), headers=headers)
+    response = requests.put(connector_url, data=json.dumps(payload), headers=headers)
     
     # Check if the request was successful
     if response.status_code != 200:
