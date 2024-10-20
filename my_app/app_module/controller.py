@@ -2,7 +2,6 @@ from uuid import UUID
 import requests
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
-from my_app.model_module.model_manager import ModelManager
 from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline
 
 import os
@@ -15,26 +14,16 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
 
     start_analysis = datetime.now().isoformat()
     predictions = []
-    # model_manager = ModelManager(selected_model)
-
-
-
     prediction_pipline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     
     for link in file_paths:
-        # return_dict =  {'file_path' : link}        
-
         files ,segments_list, labels = predict(prediction_pipline, [link])
-
-        # update database to load to the specific document 
 
         if len(segments_list) != len(labels):
             raise ValueError("Segments and labels lists must have the same length.")
         
         # Prepare modelPredictions
         model_predictions = [{"segmentNumber": segment, "label": label} for segment, label in zip(segments_list, labels)]
-        # return_dict['model_predictions'] = model_predictions
-        # return_list.append(return_dict)
 
         payload = {
             "link": link,
@@ -52,9 +41,6 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
 
     file_count = len(predictions)
     # connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions)
-
-
-    # return return_list
     return predictions
 
         
@@ -81,7 +67,6 @@ def storage_content(file_paths: List[str]):
 
 
 def connector_create_predictions(payload: Dict):
-    # Ensure the length of segments and labels match
     
     # Get the URL from environment variables
     connector_url = os.getenv('CONNECTOR_ADDRESS') + ':' + os.getenv('CONNECTOR_PORT') +'/predictions'

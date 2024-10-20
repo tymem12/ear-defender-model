@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import os
 
 # Base Model Interface
 class Model(ABC):

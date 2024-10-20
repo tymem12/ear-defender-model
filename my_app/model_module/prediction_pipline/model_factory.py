@@ -1,7 +1,6 @@
 from my_app.model_module.prediction_pipline import base_models as bm
 from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
 from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
-from my_app.model_module.dataset import Dataset_Custom
 
 
 class ModelFactory:

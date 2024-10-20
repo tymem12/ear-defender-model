@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict
-import yaml
 import torch
 import torch.nn as nn
 from my_app.model_module.models.meso import meso_net
 from my_app.model_module.models.wav2vec.model import Model
+from my_app.model_module.utils import load_config
+
 
 # Initialization Strategy Interface
 class InitializationStrategy(ABC):
@@ -46,7 +46,3 @@ class Wav2vecInitialization(InitializationStrategy):
         print(f"Initializing Wav2vec model with config: {config_path}")
         return model
 
-def load_config(yaml_path: str) -> Dict:
-    with open(yaml_path, 'r') as file:
-        config = yaml.safe_load(file)
-        return config

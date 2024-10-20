@@ -26,19 +26,6 @@ RUN /bin/bash -c "source activate SSL_Spoofing && \
 COPY . /app
 
 
-# Ensure that git is installed in the container
-# RUN apt-get install -y git
-
-# # Initialize and update submodules
-
-# # Conditionally initialize and update submodules only if the directory is empty
-# RUN if [ ! -d "/app/my_app/model_module/models/wav2vec/.git" ]; then \
-#       git submodule init && git submodule update; \
-#     else \
-#       echo "Submodule already exists or has been populated."; \
-#     fi
-
-
 # Navigate to fairseq directory and install it
 WORKDIR /app/my_app/model_module/models/wav2vec/fairseq-a54021305d6b3c4c5959ac9395135f63202db8f1
 RUN /bin/bash -c "source activate SSL_Spoofing && pip install --editable ./"
@@ -48,21 +35,20 @@ COPY requirements.txt /app/requirements.txt
 RUN /bin/bash -c "source activate SSL_Spoofing && pip install -r /app/requirements.txt"
 
 
+# Check this
+RUN mkdir -p /app/pretrained && \
+    if [ ! -f /app/pretrained/Best_LA_model_for_DF.pth ]; then \
+        wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1DMVH5l34MmOMc_Y2--qaE8YETBCYW7SL' -O /app/pretrained/Best_LA_model_for_DF.pth; \
+    fi
+
+RUN if [ ! -f /app/xlsr2_300m.pt ]; then \
+        wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1hNPENe7LctmpLoC2R1nBa7cL1gCP4f6r' -O /app/xlsr2_300m.pt; \
+    fi
+
 EXPOSE 8000
 
 WORKDIR /app
 
 COPY .env /app/.env
 
-# Modify the CMD to automatically load environment variables on start
-# CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run exec bash"]
 CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run uvicorn my_app.model_api:app --host 0.0.0.0 --port 8000 --reload"]
-
-
-
-# YOU NEED TO ADD LOADING DOTEN
-# from dotenv import load_dotenv
-# import os
-
-# # Load environment variables from the .env file
-# load_dotenv(
