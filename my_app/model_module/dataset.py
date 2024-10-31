@@ -80,10 +80,9 @@ def pad(x, max_len=64600):
     x_len = len(x)
     if x_len >= max_len:
         return x[:max_len]
-    # Pad the audio if it is shorter than max_len
-    padded_x = np.pad(x, (0, max_len - x_len), 'constant')
+    # Repeat x until reaching max_len, then slice to the exact length
+    padded_x = np.tile(x, (max_len // x_len) + 1)[:max_len]
     return padded_x
-
 
 
 if __name__ == '__main__':

@@ -4,6 +4,8 @@ from my_app.model_module.prediction_pipline import initialization_strategy as in
 
 
 class ModelFactory:
+    _available_models = ['mesonet', 'wav2vec']
+
     @staticmethod
     def create_model(model_name, config_path=None):
         if model_name == 'mesonet':
@@ -14,7 +16,15 @@ class ModelFactory:
             return bm.Wav2wec(config_path, initialization_strategy)
         else:
             raise ValueError(f"Unknown model: {model_name}")
-
+        
+    @staticmethod
+    def model_exists(model_name):
+        return model_name in ModelFactory._available_models
+    
+    @staticmethod
+    def get_available_models():
+        return ModelFactory._available_models
+    
 
 class PredictionPipeline:
     def __init__(self, model_name, config_path=None, return_labels = True, return_scores = True):

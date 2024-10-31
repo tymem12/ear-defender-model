@@ -51,4 +51,4 @@ WORKDIR /app
 
 COPY .env /app/.env
 
-CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run uvicorn my_app.model_api:app --host 0.0.0.0 --port 8000 --reload"]
+CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run uvicorn my_app.endpoints_api:app --host 0.0.0.0 --port 8000 --reload"]
