@@ -5,18 +5,14 @@ import logging
 from typing import Dict, List, Optional
 
 
-def connector_create_predictions(payload: Dict) -> Optional[Dict]:
-    # Get the URL from environment variables
+def connector_create_predictions(payload: Dict, token: str) -> Optional[Dict]:
     connector_url = os.getenv('CONNECTOR_ADDRESS') + ':' + os.getenv('CONNECTOR_PORT') + '/predictions'
 
-    if connector_url is None:
-        return {
-            "status": "failure",
-            "info": "CONNECTOR_URL environment variable is not set."
-        }
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}'
+    }
 
-    # Send the request
-    headers = {'Content-Type': 'application/json'}
     try:
         response = requests.post(connector_url, data=json.dumps(payload), headers=headers)
         response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
@@ -35,8 +31,7 @@ def connector_create_predictions(payload: Dict) -> Optional[Dict]:
 
     return response.json()
 
-
-def connector_update_analysis(analysis_id: str, status: str, finishTimestamp: str, predictionResults: List[Dict]) -> Optional[Dict]:
+def connector_update_analysis(analysis_id: str, status: str, finishTimestamp: str, predictionResults: List[Dict], token:str) -> Optional[Dict]:
     # Prepare the payload for the request
     payload = {
         "status": status,
@@ -53,7 +48,10 @@ def connector_update_analysis(analysis_id: str, status: str, finishTimestamp: st
             "info": "CONNECTOR_URL environment variable is not set."
         }
 
-    headers = {'Content-Type': 'application/json'}
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}'
+    }
     try:
         response = requests.put(connector_url, data=json.dumps(payload), headers=headers)
         response.raise_for_status()  # Raises HTTPError for bad responses
