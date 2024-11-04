@@ -3,8 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
+
+# audios
+.wav
+.mp3
+.mp4
 # C extensions
 *.so
+
 
 # Distribution / packaging
 .Python

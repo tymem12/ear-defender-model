@@ -20,18 +20,24 @@ def test_analyze_files_model_endpoint_mesonet():
     }
     load_dotenv()
 
-    # Mock the controller's predict_audios method if necessary
-    # to return a known response
-    controller.predict_audios = lambda *args, **kwargs: {"status": "success", "model": "mesonet"}
+    # Mock the controller's predict_audios and evaluate_parameters_model_run methods if necessary
+    controller.predict_audios = lambda *args, **kwargs: {"status": "accepted", "model": "mesonet"}
+    controller.evaluate_parameters_model_run = lambda *args, **kwargs: (True, "Valid parameters")
 
-    # Send POST request to /model
-    response = client.post("/model/run", json=request_data)
+    # Send POST request to /model with authorization header
+    response = client.post("/model/run", json=request_data, headers={"authorization": "Bearer test_token"})
+
+    # Print the response content for debugging
+    print("Response status code:", response.status_code)
+    print("Response JSON:", response.json())
 
     # Assert response status code and content
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["status"] == "success"
-    assert response_json["model"] == "mesonet"
+    assert response_json["status"] == "accepted"
+    assert response_json["info"].startswith("Request for analysis")
+    assert response_json["analysis_id"] == str(test_analysis_id)
+    assert response_json["files"] == len(test_file_paths)
 
 
 def test_analyze_files_model_endpoint_wav_to_vec():
@@ -48,15 +54,21 @@ def test_analyze_files_model_endpoint_wav_to_vec():
     }
     load_dotenv()
 
-    # Mock the controller's predict_audios method if necessary
-    # to return a known response
-    controller.predict_audios = lambda *args, **kwargs: {"status": "success", "model": "wav2vec"}
+    # Mock the controller's predict_audios and evaluate_parameters_model_run methods if necessary
+    controller.predict_audios = lambda *args, **kwargs: {"status": "accepted", "model": "wav2vec"}
+    controller.evaluate_parameters_model_run = lambda *args, **kwargs: (True, "Valid parameters")
 
-    # Send POST request to /model
-    response = client.post("/model/run", json=request_data)
+    # Send POST request to /model with authorization header
+    response = client.post("/model/run", json=request_data, headers={"authorization": "Bearer test_token"})
+
+    # Print the response content for debugging
+    print("Response status code:", response.status_code)
+    print("Response JSON:", response.json())
 
     # Assert response status code and content
     assert response.status_code == 200
     response_json = response.json()
-    assert response_json["status"] == "success"
-    assert response_json["model"] == "wav2vec"
+    assert response_json["status"] == "accepted"
+    assert response_json["info"].startswith("Request for analysis")
+    assert response_json["analysis_id"] == str(test_analysis_id)
+    assert response_json["files"] == len(test_file_paths)
