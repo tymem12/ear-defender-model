@@ -34,7 +34,7 @@ class MesonetModel(Model):
 
     def predict(self, input_data):
 
-        print(f"ModelA predictions for {input_data}")
+        # print(f"ModelA predictions for {input_data}")
         return self.initialized_model(input_data)
     
 
@@ -44,7 +44,7 @@ class Wav2wec(Model):
         return 'config_files/config_wav2vec.yaml'
 
     def predict(self, input_data):
-        print(f"ModelB predictions for {input_data}")
+        # print(f"ModelB predictions for {input_data}")
         return self.initialized_model(input_data)
     
     def get_threshold_value(self):

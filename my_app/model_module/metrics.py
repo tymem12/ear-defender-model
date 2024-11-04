@@ -11,24 +11,9 @@ def calculate_eer_from_scores(scores_spoof: List[float], scores_real: List[float
     print(f"EER: {eer}   threshold: {threshold}")
     return eer, threshold
 
-def calculate_eer_from_scores_csv(spoof_links: List[str], real_links: List[str]):
-    scores_spoof = []
-    scores_real = []
-    for spoof_link in spoof_links:
-        with open(spoof_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for row in reader:
-                scores_spoof.append(float(row[2]))  # Append the score that is in the third row
 
-    for real_link in real_links:
-        with open(real_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for row in reader:
-                scores_real.append(float(row[2]))  # Append the score that is in the third row
     
-    return calculate_eer_from_scores(scores_spoof, scores_real)
+    # return calculate_eer_from_scores(scores_spoof, scores_real)
 
 
 def calculate_eer_from_labels(model_predictions: List[int], actual_labels: List[int]):
@@ -60,26 +45,9 @@ def calculate_eer_from_labels(model_predictions: List[int], actual_labels: List[
     
     return eer
 
-def calculate_eer_from_labels_csv(spoof_links: List[str], real_links: List[str]):
-    predictions = []
-    labels = []
-    for spoof_link in spoof_links:
-        with open(spoof_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for row in reader:
-                predictions.append(int(row[3]))
-                labels.append(0)
 
-    for real_link in real_links:
-        with open(real_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for row in reader:
-                predictions.append(int(row[3]))
-                labels.append(1)
     
-    return calculate_eer_from_labels(predictions, labels)
+    # return calculate_eer_from_labels(predictions, labels)
     
 
 

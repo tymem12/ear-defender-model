@@ -8,4 +8,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./storage:/app/storage
+      - ../storage:/app/storage
+      - ./results_csv:/app/results_csv
+      - ./datasets:/app/datasets

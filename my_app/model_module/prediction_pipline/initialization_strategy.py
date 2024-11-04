@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from my_app.model_module.models.meso import meso_net
 from my_app.model_module.models.wav2vec.model import Model
-from my_app.model_module.utils import load_config
+from my_app.utils import load_config
 
 
 # Initialization Strategy Interface
@@ -30,7 +30,7 @@ class MesonetInitialization(InitializationStrategy):
         )
         model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         model = model.to(self.device)
-        print(f"Initializing Mesonet model with config: {config_path}")
+        # print(f"Initializing Mesonet model with config: {config_path}")
         return model
 
 # Concrete Initialization Strategy for Wav2vec Model
@@ -43,6 +43,6 @@ class Wav2vecInitialization(InitializationStrategy):
         model = nn.DataParallel(model).to(self.device)
         model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         model.to(self.device)
-        print(f"Initializing Wav2vec model with config: {config_path}")
+        # print(f"Initializing Wav2vec model with config: {config_path}")
         return model
 

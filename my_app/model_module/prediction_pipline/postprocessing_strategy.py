@@ -28,7 +28,7 @@ class Wav2vecPostprocessing(PostprocessingStrategy):
         self.threshold : float = threshold
     
     def _process_scores(self, prediction):
-        print(f"Postprocessed for wav2vec")
+        # print(f"Postprocessed for wav2vec")
     
         scores_list = [t[-1].item() for t in prediction]
         return scores_list
@@ -42,7 +42,7 @@ class MesoPostprocessing(PostprocessingStrategy):
 
     
     def _process_scores(self, prediction):
-        print(f"Postprocessed for mesonet")
+        # print(f"Postprocessed for mesonet")
         # elements = [ scor[1] for scor in prediction]
         # label_list = [((tensor > float(self.threshold)).int()).item() for tensor in elements ]
         scores_list = [t[0].item() for t in prediction]
