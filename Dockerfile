@@ -45,10 +45,10 @@ RUN if [ ! -f /app/xlsr2_300m.pt ]; then \
         wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1hNPENe7LctmpLoC2R1nBa7cL1gCP4f6r' -O /app/xlsr2_300m.pt; \
     fi
 
-EXPOSE 8000
+EXPOSE 7000
 
 WORKDIR /app
 
 COPY .env /app/.env
 
-CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run uvicorn my_app.endpoints_api:app --host 0.0.0.0 --port 8000 --reload"]
+CMD ["/bin/bash", "-c", "source activate SSL_Spoofing && python -m dotenv -f /app/.env run uvicorn my_app.endpoints_api:app --host 0.0.0.0 --port 7000 --reload"]
