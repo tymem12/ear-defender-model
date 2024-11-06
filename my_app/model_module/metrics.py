@@ -8,7 +8,6 @@ def calculate_eer_from_scores(scores_spoof: List[float], scores_real: List[float
     scores_real = np.array(scores_real)
 
     eer, threshold = compute_eer(scores_real, scores_spoof)
-    print(f"EER: {eer}   threshold: {threshold}")
     return eer, threshold
 
 
@@ -41,13 +40,11 @@ def calculate_eer_from_labels(model_predictions: List[int], actual_labels: List[
     
     # EER occurs when FAR == FRR (approximately)
     eer = (far + frr) / 2
-    print(f'EER: {eer}')
     
     return eer
 
 
     
-    # return calculate_eer_from_labels(predictions, labels)
     
 
 

@@ -2,7 +2,7 @@ from uuid import UUID
 import requests
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
-from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline, ModelFactory
+from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline, ModelFactory, ModelStore
 from my_app.app_module import client_API
 from my_app import utils
 from my_app.model_module import metrics
@@ -17,10 +17,13 @@ def store_token(analysis_id, token):
     TOKENS[analysis_id] = token
 
 def evaluate_parameters_model_run(selected_model: str, file_paths):
-    try:
-        PredictionPipeline(selected_model)
-    except ValueError as e:
-        return False, f'Unknown model: {selected_model}'
+    if not ModelStore.get(selected_model):
+        try:
+            prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
+            ModelStore.add(selected_model, prediction_pipeline)
+        except ValueError as e:
+            logging.info(f"Error initializing PredictionPipeline: {str(e)}")
+            return False, f'Unknown model: {selected_model}'
     
     storage_path = os.getenv('AUDIO_STORAGE')
     for file in file_paths:
@@ -37,23 +40,16 @@ def get_models():
 def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str]):
     logging.info(f'analysis {analysis_id} started')
 
-    # get mo
     can_access_connector = True
-    start_analysis = datetime.now().isoformat()
     predictions = []
     token = TOKENS[analysis_id]
-    try:
-        prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
-    except ValueError as e:
-        # Log error as the response has already been sent
-        logging.info(f"Error initializing PredictionPipeline: {str(e)}")
-        return  # Exit if model initialization fails
+    prediction_pipeline = ModelStore.get(selected_model)
     
     for link in file_paths:
         files ,segments_list, labels = predict(prediction_pipeline, [link])
 
         if len(segments_list) != len(labels):
-            print("Segments and labels lists must have the same length.")
+            logging.info("Segments and labels lists must have the same length.")
             continue  # Log and skip this file if there's an inconsistency
         model_predictions = [{"segmentNumber": segment, "label": label} for segment, label in zip(segments_list, labels)]
         payload = {
@@ -62,10 +58,11 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
             "model": selected_model,
             "modelPredictions": model_predictions
         }
-        if can_access_connector:
-            create_pred_res = client_API.connector_create_predictions(payload, token=token) #methods that send rtequest to diffrent API
-            if create_pred_res.get('status', 'success') == 'failure': 
-                can_access_connector = False 
+        logging.info(f"{link} ready to sent to connector ")
+        # if can_access_connector:
+        create_pred_res = client_API.connector_create_predictions(payload, token=token) #methods that send rtequest to diffrent API
+        if not create_pred_res.get('status', 'success') == 'failure': 
+            pass 
         predictions.append(payload)
     
     
@@ -73,8 +70,8 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
     end_analysis = datetime.now().isoformat()
 
     file_count = len(predictions)
-    if can_access_connector:
-        logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions, token =token )) #methods that send rtequest to diffrent API
+    # if can_access_connector:
+    logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions, token =token )) #methods that send rtequest to diffrent API
 
     logging.info(f'analysis {analysis_id} finished')
 
