@@ -35,6 +35,8 @@ def get_models():
 
 
 def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str]):
+    logging.info(f'analysis {analysis_id} started')
+
     # get mo
     can_access_connector = True
     start_analysis = datetime.now().isoformat()
@@ -44,7 +46,7 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
         prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     except ValueError as e:
         # Log error as the response has already been sent
-        print(f"Error initializing PredictionPipeline: {str(e)}")
+        logging.info(f"Error initializing PredictionPipeline: {str(e)}")
         return  # Exit if model initialization fails
     
     for link in file_paths:
@@ -72,28 +74,9 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
 
     file_count = len(predictions)
     if can_access_connector:
-        upate_analysis_res = client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions, token =token ) #methods that send rtequest to diffrent API
+        logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions, token =token )) #methods that send rtequest to diffrent API
 
-    #     return {
-    #             "status": "success",
-    #             "info": f'{file_count} files were analyzed',
-    #             "files_count" : file_count,
-    #             'analysis' : analysis_id,
-    #             'timestamp_start' : start_analysis,
-    #             'timestamp_end' : end_analysis,  # For example, "Unknown model: <model_name>"
-    #             'model': selected_model,
-    #             'predictions': predictions
-    #         }
-    # return {
-    #             "status": "failure",
-    #             "info": f'Could not access connector, analysis not saved',
-    #             "files_count" : file_count,
-    #             'analysis' : analysis_id,
-    #             'timestamp_start' : start_analysis,
-    #             'timestamp_end' : end_analysis,  # For example, "Unknown model: <model_name>"
-    #             'model': selected_model,
-    #             'predictions': predictions
-    #         }
+    logging.info(f'analysis {analysis_id} finished')
 
         
 
@@ -127,16 +110,7 @@ def eval_params_eval_dataset(dataset:str, model_conf: str, output_csv = str):
 def eval_dataset(dataset:str, model_conf: str, output_csv : str):
     config_path = os.getenv('CONFIG_FOLDER') + '/' +model_conf
 
-    # config_path = os.getenv('CONFIG_FOLDER') + '/' +model_conf
-    # available_datasets = ['deep_voice', 'fake_audio', 'my_eng', 'my_pol', 'release_in_the_wild', 'test_dataset', 'example']
-    # if dataset not in available_datasets:
-    #      return {
-    #         "status": "failure",
-    #         "info": 'Not correct dataset_name. available_datasets are: ' + available_datasets,
-    #     }
-        
-    
-    
+
     model_name = utils.load_config(config_path)['model']['name']
     try:
         files_fake, folder_path_fake = utils.get_files_to_predict(dataset = dataset, status = 'fake')
@@ -148,12 +122,6 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
         }
     # try:
     prediction_pipline = PredictionPipeline(model_name, config_path = config_path,return_labels = True, return_scores = True)
-    # except ValueError as e:
-    #     # Handle the case where an unknown model name is provided
-    #     return {
-    #         "status": "failure",
-    #         "info": str(e)  # For example, "Unknown model: <model_name>"
-    #     }
     results_folder = os.getenv('RESULTS_CSV')
     results_csv_path_fake = f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'
     for file in files_fake:
