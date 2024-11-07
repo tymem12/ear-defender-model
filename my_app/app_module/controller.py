@@ -1,4 +1,4 @@
-from uuid import UUID
+# from uuid import UUID
 import requests
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
@@ -14,7 +14,10 @@ import logging
 TOKENS = {}
 
 def store_token(analysis_id, token):
-    TOKENS[analysis_id] = token
+    token_elem = token.split()
+    # logging.info(token_elem[-1])
+
+    TOKENS[analysis_id] = token_elem[-1]
 
 def evaluate_parameters_model_run(selected_model: str, file_paths):
     if not ModelStore.get(selected_model):
@@ -37,7 +40,7 @@ def get_models():
 
 
 
-def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str]):
+def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]):
     logging.info(f'analysis {analysis_id} started')
 
     can_access_connector = True
@@ -58,20 +61,15 @@ def predict_audios(analysis_id : UUID, selected_model: str, file_paths: List[str
             "model": selected_model,
             "modelPredictions": model_predictions
         }
-        logging.info(f"{link} ready to sent to connector ")
-        # if can_access_connector:
-        create_pred_res = client_API.connector_create_predictions(payload, token=token) #methods that send rtequest to diffrent API
-        if not create_pred_res.get('status', 'success') == 'failure': 
-            pass 
+        logging.info(client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)) #methods that send rtequest to diffrent API
         predictions.append(payload)
     
     
     status = 'FINISHED'
-    end_analysis = datetime.now().isoformat()
+    end_analysis = datetime.now().replace(microsecond=0).isoformat() + 'Z'
 
-    file_count = len(predictions)
     # if can_access_connector:
-    logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, predictionResults=predictions, token =token )) #methods that send rtequest to diffrent API
+    logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, token =token )) #methods that send rtequest to diffrent API
 
     logging.info(f'analysis {analysis_id} finished')
 

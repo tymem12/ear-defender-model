@@ -9,7 +9,7 @@ app = FastAPI()
 
 # Define a Pydantic model for request body
 class AnalysisRequest(BaseModel):
-    analysisId: UUID
+    analysisId: str
     model: str
     filePaths: List[str]
 
