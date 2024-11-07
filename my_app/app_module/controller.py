@@ -61,7 +61,9 @@ def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]
             "model": selected_model,
             "modelPredictions": model_predictions
         }
+            # logging.info(client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)) #methods that send rtequest to diffrent API
         logging.info(client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)) #methods that send rtequest to diffrent API
+    
         predictions.append(payload)
     
     
@@ -69,7 +71,7 @@ def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]
     end_analysis = datetime.now().replace(microsecond=0).isoformat() + 'Z'
 
     # if can_access_connector:
-    logging.info(client_API.connector_update_analysis(analysis_id=analysis_id, status=status, finishTimestamp=end_analysis, token =token )) #methods that send rtequest to diffrent API
+    logging.info(client_API.connector_end_analysis(analysis_id=analysis_id,  token =token )) #methods that send rtequest to diffrent API
 
     logging.info(f'analysis {analysis_id} finished')
 
