@@ -1,7 +1,8 @@
 from my_app.model_module.prediction_pipline import base_models as bm
 from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
 from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
-
+from typing import Dict, Optional
+import logging
 
 class ModelFactory:
     _available_models = ['mesonet', 'wav2vec']
@@ -49,4 +50,16 @@ class PredictionPipeline:
         model_output = self.postprocessing_strategy.process(prediction, self.return_scores, self.return_labels)
         return model_output
     
+class ModelStore:
+    _store: Dict[str, PredictionPipeline] = {}
 
+    @staticmethod
+    def add(name: str, prediction_pipeline: PredictionPipeline) -> None:
+        if name not in ModelStore._store:
+            ModelStore._store[name] = prediction_pipeline
+            logging.info("Adding model "+ name + " to store")
+            
+
+    @staticmethod
+    def get(name: str) -> Optional[PredictionPipeline]:
+        return ModelStore._store.get(name)
