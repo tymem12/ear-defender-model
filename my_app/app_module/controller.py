@@ -1,5 +1,4 @@
 # from uuid import UUID
-import requests
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
 from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline, ModelFactory, ModelStore
@@ -15,18 +14,15 @@ TOKENS = {}
 
 def store_token(analysis_id, token):
     token_elem = token.split()
-    # logging.info(token_elem[-1])
-
     TOKENS[analysis_id] = token_elem[-1]
 
 def evaluate_parameters_model_run(selected_model: str, file_paths):
-    if not ModelStore.get(selected_model):
-        try:
-            prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
-            ModelStore.add(selected_model, prediction_pipeline)
-        except ValueError as e:
-            logging.info(f"Error initializing PredictionPipeline: {str(e)}")
-            return False, f'Unknown model: {selected_model}'
+    # if not ModelStore.get(selected_model):
+    try:
+        PredictionPipeline(selected_model, return_labels=True, return_scores=False)
+    except ValueError as e:
+        logging.info(f"Error initializing PredictionPipeline: {str(e)}")
+        return False, f'Unknown model: {selected_model}'
     
     storage_path = os.getenv('AUDIO_STORAGE')
     for file in file_paths:
@@ -46,7 +42,7 @@ def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]
     can_access_connector = True
     predictions = []
     token = TOKENS[analysis_id]
-    prediction_pipeline = ModelStore.get(selected_model)
+    prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     
     for link in file_paths:
         files ,segments_list, labels = predict(prediction_pipeline, [link])
@@ -62,18 +58,27 @@ def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]
             "modelPredictions": model_predictions
         }
             # logging.info(client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)) #methods that send rtequest to diffrent API
-        logging.info(client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)) #methods that send rtequest to diffrent API
-    
-        predictions.append(payload)
-    
-    
-    status = 'FINISHED'
-    end_analysis = datetime.now().replace(microsecond=0).isoformat() + 'Z'
+        response_code, info = client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token) #methods that send rtequest to diffrent API
+        utils.delate_file_from_storage(link)
+        if response_code != 200:
+            logging.info(f": {link} predictions not send to the connector: {info}" )
+            client_API.connector_abort_analysis(analysis_id, token)
+            can_access_connector = False
+            break
+        else:
+            predictions.append(payload)
+            logging.info(f"analysis {analysis_id} updated with new prediction for file: {link} " )
 
-    # if can_access_connector:
-    logging.info(client_API.connector_end_analysis(analysis_id=analysis_id,  token =token )) #methods that send rtequest to diffrent API
+    if can_access_connector:
+        response_code, info = client_API.connector_end_analysis(analysis_id=analysis_id,  token =token ) #methods that send rtequest to diffrent API
+        if response_code == 200:
+            logging.info(f'analysis {analysis_id} finished')
+        else:
+            client_API.connector_abort_analysis(analysis_id, token)
+            
+    else:
+        logging.info(f'analysis {analysis_id} was aborted')
 
-    logging.info(f'analysis {analysis_id} finished')
 
         
 
@@ -147,7 +152,6 @@ def eval_metrics(dataset:str, output_csv):
         "info": str(e),
         }
     eer = metrics.calculate_eer_from_labels(predictions, labels)
-    # results = metrics.calculate_eer_from_labels_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
     return {
         "status": "success",
         "info": 'err calculated',
