@@ -37,6 +37,8 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
     status, info = controller.evaluate_parameters_model_run(selected_model, file_paths)
     if not status:
         raise HTTPException(status_code=400, detail=info)
+    
+    
 
     # Store the token associated with this analysis_id
     controller.store_token(analysis_id, authorization)

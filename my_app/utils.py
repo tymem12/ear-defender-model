@@ -93,3 +93,8 @@ def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
                     scores_real.append(float(row[2]))
 
     return scores_spoof, scores_real
+
+def delate_file_from_storage(link: str, base_dir = os.getenv('AUDIO_STORAGE')):
+    file_path = f'{base_dir}/{link}'
+    os.remove(file_path)
+ 
