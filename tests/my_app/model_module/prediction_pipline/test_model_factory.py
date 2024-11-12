@@ -1,102 +1,111 @@
 import pytest
-from unittest.mock import patch, MagicMock
-from my_app.model_module.prediction_pipline.model_factory import ModelFactory, PredictionPipeline
+from unittest.mock import Mock, patch
+import torch
 from my_app.model_module.prediction_pipline import base_models as bm
+from my_app.model_module.prediction_pipline.model_factory import ModelFactory, PredictionPipeline
 from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
 from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
 
-class TestModelFactory:
-    
-    @patch("my_app.model_module.prediction_pipline.model_factory.init_strat.MesonetInitialization")
-    @patch("my_app.model_module.prediction_pipline.model_factory.bm.MesonetModel")
-    def test_create_mesonet_model(self, MockMesonetModel, MockMesonetInitialization):
-        # Mock initialization
-        mock_init = MockMesonetInitialization.return_value
-        mock_model_instance = MockMesonetModel.return_value
-        
-        model = ModelFactory.create_model('mesonet', config_path='path/to/config')
-        
-        MockMesonetInitialization.assert_called_once()
-        MockMesonetModel.assert_called_once_with('path/to/config', mock_init)
-        assert model == mock_model_instance
 
-    @patch("my_app.model_module.prediction_pipline.model_factory.init_strat.Wav2vecInitialization")
-    @patch("my_app.model_module.prediction_pipline.model_factory.bm.Wav2wec")
-    def test_create_wav2vec_model(self, MockWav2wec, MockWav2vecInitialization):
-        # Mock initialization
-        mock_init = MockWav2vecInitialization.return_value
-        mock_model_instance = MockWav2wec.return_value
-        
-        model = ModelFactory.create_model('wav2vec', config_path='path/to/config')
-        
-        MockWav2vecInitialization.assert_called_once()
-        MockWav2wec.assert_called_once_with('path/to/config', mock_init)
-        assert model == mock_model_instance
-
-    def test_create_model_invalid_name(self):
-        with pytest.raises(ValueError, match="Unknown model: invalid_model"):
-            ModelFactory.create_model('invalid_model')
-
-    def test_model_exists(self):
-        assert ModelFactory.model_exists('mesonet') is True
-        assert ModelFactory.model_exists('wav2vec') is True
-        assert ModelFactory.model_exists('invalid_model') is False
-
-    def test_get_available_models(self):
-        models = ModelFactory.get_available_models()
-        assert models == ['mesonet', 'wav2vec']
+# Tests for ModelFactory
+def test_model_factory_create_mesonet_model():
+    """Test creating a Mesonet model using ModelFactory."""
+    with patch.object(init_strat, 'MesonetInitialization', return_value=Mock()) as mock_init:
+        with patch.object(bm, 'MesonetModel') as MockModel:
+            model = ModelFactory.create_model('mesonet', 'config_path')
+            mock_init.assert_called_once()
+            MockModel.assert_called_once_with('config_path', mock_init.return_value)
+            assert model == MockModel.return_value  # Directly compare with MockModel's return value
 
 
-class TestPredictionPipeline:
+def test_model_factory_create_wav2vec_model():
+    """Test creating a Wav2vec model using ModelFactory."""
+    with patch.object(init_strat, 'Wav2vecInitialization', return_value=Mock()) as mock_init:
+        with patch.object(bm, 'Wav2wec') as MockModel:
+            model = ModelFactory.create_model('wav2vec', 'config_path')
+            mock_init.assert_called_once()
+            MockModel.assert_called_once_with('config_path', mock_init.return_value)
+            assert model == MockModel.return_value  # Directly compare with MockModel's return value
 
-    @patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.create_model")
-    @patch("my_app.model_module.prediction_pipline.model_factory.ps.MesoPostprocessing")
-    def test_prediction_pipeline_mesonet(self, MockMesoPostprocessing, MockCreateModel):
-        # Mock setup
-        mock_model = MagicMock()
-        MockCreateModel.return_value = mock_model
-        mock_postprocessing = MockMesoPostprocessing.return_value
-        
-        pipeline = PredictionPipeline(model_name='mesonet', config_path='path/to/config')
 
-        MockCreateModel.assert_called_once_with('mesonet', 'path/to/config')
-        MockMesoPostprocessing.assert_called_once()
-        assert pipeline.model == mock_model
-        assert pipeline.postprocessing_strategy == mock_postprocessing
+def test_model_factory_unknown_model():
+    """Test creating an unknown model raises ValueError."""
+    with pytest.raises(ValueError, match="Unknown model: unknown"):
+        ModelFactory.create_model('unknown')
 
-    @patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.create_model")
-    @patch("my_app.model_module.prediction_pipline.model_factory.ps.Wav2vecPostprocessing")
-    def test_prediction_pipeline_wav2vec(self, MockWav2vecPostprocessing, MockCreateModel):
-        # Mock setup
-        mock_model = MagicMock()
-        mock_model.get_threshold_value.return_value = 0.5
-        MockCreateModel.return_value = mock_model
-        mock_postprocessing = MockWav2vecPostprocessing.return_value
 
-        pipeline = PredictionPipeline(model_name='wav2vec', config_path='path/to/config')
+def test_model_factory_model_exists():
+    """Test model_exists method for known and unknown models."""
+    assert ModelFactory.model_exists('mesonet') is True
+    assert ModelFactory.model_exists('wav2vec') is True
+    assert ModelFactory.model_exists('unknown') is False
 
-        MockCreateModel.assert_called_once_with('wav2vec', 'path/to/config')
-        MockWav2vecPostprocessing.assert_called_once_with(0.5)
-        assert pipeline.model == mock_model
-        assert pipeline.postprocessing_strategy == mock_postprocessing
 
-    def test_prediction_pipeline_invalid_postprocessing(self):
-        with pytest.raises(ValueError, match="Unknown model: invalid_model"):
-            PredictionPipeline(model_name='invalid_model')
+def test_model_factory_get_available_models():
+    """Test get_available_models returns the correct list."""
+    assert ModelFactory.get_available_models() == ['mesonet', 'wav2vec']
 
-    @patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.create_model")
-    @patch("my_app.model_module.prediction_pipline.model_factory.ps.MesoPostprocessing")
-    def test_predict(self, MockMesoPostprocessing, MockCreateModel):
-        # Mock setup
-        mock_model = MagicMock()
-        mock_model.predict.return_value = "mocked_prediction"
-        MockCreateModel.return_value = mock_model
-        mock_postprocessing = MockMesoPostprocessing.return_value
-        mock_postprocessing.process.return_value = "processed_output"
 
-        pipeline = PredictionPipeline(model_name='mesonet', config_path='path/to/config')
-        result = pipeline.predict("mock_input_data")
+# Tests for PredictionPipeline
+@pytest.fixture
+def mock_mesonet_model():
+    """Fixture for a mocked MesonetModel."""
+    with patch.object(bm, 'MesonetModel') as MockModel:
+        mock_instance = MockModel.return_value
+        mock_instance.initialized_model.eval = Mock()
+        mock_instance.predict = Mock(return_value=[torch.tensor([0.5])])
+        yield mock_instance
 
-        mock_model.predict.assert_called_once_with("mock_input_data")
-        mock_postprocessing.process.assert_called_once_with("mocked_prediction", pipeline.return_scores, pipeline.return_labels)
-        assert result == "processed_output"
+
+@pytest.fixture
+def mock_wav2vec_model():
+    """Fixture for a mocked Wav2vec model with a threshold."""
+    with patch.object(bm, 'Wav2wec') as MockModel:
+        mock_instance = MockModel.return_value
+        mock_instance.initialized_model.eval = Mock()
+        mock_instance.predict = Mock(return_value=[torch.tensor([0.9])])
+        mock_instance.get_threshold_value = Mock(return_value=0.5)
+        yield mock_instance
+
+
+def test_prediction_pipeline_mesonet(mock_mesonet_model):
+    """Test PredictionPipeline with Mesonet model."""
+    with patch.object(ModelFactory, 'create_model', return_value=mock_mesonet_model):
+        with patch.object(ps, 'MesoPostprocessing') as MockPostprocessing:
+            postprocessor_instance = MockPostprocessing.return_value
+            postprocessor_instance.process = Mock(return_value='processed_output')
+            
+            pipeline = PredictionPipeline('mesonet', 'config_path')
+            assert pipeline.model == mock_mesonet_model
+            assert pipeline.postprocessing_strategy == postprocessor_instance
+            
+            output = pipeline.predict('input_data')
+            mock_mesonet_model.predict.assert_called_once_with('input_data')
+            postprocessor_instance.process.assert_called_once_with([torch.tensor([0.5])], True, True)
+            assert output == 'processed_output'
+
+
+def test_prediction_pipeline_wav2vec(mock_wav2vec_model):
+    """Test PredictionPipeline with Wav2vec model."""
+    with patch.object(ModelFactory, 'create_model', return_value=mock_wav2vec_model):
+        with patch.object(ps, 'Wav2vecPostprocessing') as MockPostprocessing:
+            postprocessor_instance = MockPostprocessing.return_value
+            postprocessor_instance.process = Mock(return_value='processed_output')
+            
+            pipeline = PredictionPipeline('wav2vec', 'config_path')
+            assert pipeline.model == mock_wav2vec_model
+            assert pipeline.postprocessing_strategy == postprocessor_instance
+            
+            output = pipeline.predict('input_data')
+            mock_wav2vec_model.predict.assert_called_once_with('input_data')
+            postprocessor_instance.process.assert_called_once_with([torch.tensor([0.9])], True, True)
+            assert output == 'processed_output'
+
+
+def test_prediction_pipeline_unknown_postprocessing():
+    """Test PredictionPipeline with unknown postprocessing raises ValueError."""
+    with patch.object(ModelFactory, 'create_model', return_value=Mock()):
+        with pytest.raises(ValueError, match="Unknown postprocessing for model: unknown"):
+            PredictionPipeline('unknown')
+
+
