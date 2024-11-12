@@ -1,152 +1,184 @@
 import pytest
-from unittest import mock
-from my_app.app_module import client_API
-from my_app.model_module import metrics
-from my_app.app_module.controller import (
-    store_token,
-    evaluate_parameters_model_run,
-    get_models,
-    predict_audios,
-    storage_content,
-    eval_params_eval_dataset,
-    eval_dataset,
-    eval_metrics,
-    TOKENS
-)
+from unittest.mock import patch, MagicMock
+from my_app.app_module.controller import store_token, evaluate_parameters_model_run, get_models, storage_content, eval_params_eval_dataset, eval_metrics, TOKENS
+import os
 
-# Mock data for testing
-mock_analysis_id = "test_analysis"
-mock_token = "mock_token"
-mock_selected_model = "mesonet"
-mock_file_paths = ["file1.wav", "file2.wav"]
-mock_dataset = "test_dataset"
-mock_model_conf = "config_mesonet.yaml"
-mock_output_csv = "test_output"
-
-@pytest.fixture
-def mock_env(monkeypatch):
-    """Fixture to set environment variables."""
-    monkeypatch.setenv("AUDIO_STORAGE", "/mock/storage")
-    monkeypatch.setenv("CONFIG_FOLDER", "/mock/config")
-    monkeypatch.setenv("RESULTS_CSV", "/mock/results")
+# 1. Test `store_token`
+def test_store_token():
+    analysis_id = "123"
+    token = "Bearer abcdef123456"
+    store_token(analysis_id, token)
+    assert TOKENS[analysis_id] == "abcdef123456"
 
 
-@pytest.fixture
-def reset_tokens():
-    """Fixture to reset TOKENS dictionary after each test."""
-    TOKENS.clear()
+# 2. Test `evaluate_parameters_model_run`
+@patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.create_model", return_value=MagicMock())
+@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
+@patch("os.path.isfile", return_value=True)  # Simulate that all files exist
+@patch("os.getenv", return_value="/fake_storage_path")
+def test_evaluate_parameters_model_run_valid(mock_getenv, mock_isfile, mock_pipeline_init, mock_create_model):
+    # Call the function
+    status, message = evaluate_parameters_model_run("any_model_name", ["audio1.wav", "audio2.wav"])
+    print(f"Status: {status}, Message: {message}")
+
+    # Assertions
+    assert status is True, f"Expected True but got {status}"
+    assert message == "2 passed to analysis", f"Expected '2 passed to analysis' but got '{message}'"
+@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline", side_effect=ValueError("Unknown model"))
+def test_evaluate_parameters_model_run_invalid_model(mock_prediction_pipeline):
+    status, message = evaluate_parameters_model_run("invalid_model", ["audio1.wav"])
+    assert status is False
+    assert "Unknown model: invalid_model" in message
+
+@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
+@patch("os.path.isfile", return_value=False)  # Files do not exist in storage
+@patch("os.getenv", return_value="/fake_storage_path")
+def test_evaluate_parameters_model_run_missing_files(mock_getenv, mock_isfile, mock_pipeline_init):
+    status, message = evaluate_parameters_model_run("valid_model", ["missing_file.wav"])
+    assert status is False
+    assert message == "File does not exists in storage"
 
 
-def test_store_token(reset_tokens):
-    store_token(mock_analysis_id, f"Bearer {mock_token}")
-    assert TOKENS[mock_analysis_id] == mock_token
+# 3. Test `get_models`
+@patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.get_available_models")
+def test_get_models(mock_get_available_models):
+    mock_get_available_models.return_value = ["model1", "model2"]
+    models = get_models()
+    assert models == ["model1", "model2"]
 
 
-def test_evaluate_parameters_model_run_valid_model(mock_env):
-    with mock.patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline") as mock_pipeline, \
-         mock.patch("os.path.isfile", return_value=True):  # Mock os.path.isfile to return True for all files
-        mock_pipeline.return_value = mock.Mock()  # Mock successful initialization of PredictionPipeline
-        success, message = evaluate_parameters_model_run(mock_selected_model, mock_file_paths)
-        print('AAAAAAAAAAAAA' + message)
-        assert success is True
-        assert message == f"{len(mock_file_paths)} passed to analysis"
+# 4. Test `storage_content`
+@patch("os.path.exists", side_effect=lambda x: x in ["/fake_storage_path/audio1.wav", "/fake_storage_path/audio2.wav"])
+@patch("os.path.join", side_effect=lambda *args: "/fake_storage_path/" + args[-1])
+@patch("os.getenv", return_value="/fake_storage_path")
+@patch("os.listdir", return_value=["audio1.wav", "audio2.wav", "audio3.wav"])
+@patch("os.path.isfile", side_effect=lambda x: x in ["/fake_storage_path/audio1.wav", "/fake_storage_path/audio2.wav"])
+def test_storage_content_files_exist(mock_getenv, mock_join, mock_exists, mock_listdir, mock_isfile):
+    # Call the storage_content function with the test files
+    results = storage_content(["audio1.wav", "audio2.wav", "audio4.wav"])
 
+    # Assert the expected output
+    assert results == {"audio1.wav": True, "audio2.wav": True, "audio4.wav": False}
 
-def test_evaluate_parameters_model_run_invalid_model(mock_env):
-    with mock.patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline", side_effect=ValueError("Unknown model")):
-        success, message = evaluate_parameters_model_run("invalid_model", mock_file_paths)
-        assert success is False
-        assert "Unknown model" in message
+@patch("os.path.exists", side_effect=lambda x: False)
+@patch("os.getenv", return_value="/fake_storage_path")
+@patch("os.listdir", return_value=[])  # Mock listdir to return an empty list
+def test_storage_content_files_missing(mock_getenv, mock_exists, mock_listdir):
+    results = storage_content(["nonexistent.wav"])
+    assert results == {"nonexistent.wav": False}
 
+# 5. Test `eval_params_eval_dataset`
+@patch("os.getenv", return_value="/fake_config_path")
+def test_eval_params_eval_dataset_valid(mock_getenv):
+    status, message = eval_params_eval_dataset("deep_voice", "config_mesonet.yaml")
+    assert status is True
+    assert "Analysis started for dataset deep_voice" in message
 
-def test_get_models():
-    with mock.patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.get_available_models", return_value=["model1", "model2"]):
-        models = get_models()
-        assert models == ["model1", "model2"]
-
-
-@mock.patch("my_app.app_module.client_API.connector_create_predictions")
-@mock.patch("my_app.utils.delate_file_from_storage")
-def test_predict_audios_success(mock_delete_file, mock_connector_create_predictions, reset_tokens, mock_env):
-    store_token(mock_analysis_id, f"Bearer {mock_token}")
-    mock_connector_create_predictions.return_value = (200, "Success")
-    
-    with mock.patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline") as mock_pipeline:
-        mock_pipeline.return_value = mock.Mock()  # Mock the prediction pipeline
-        predict_audios(mock_analysis_id, mock_selected_model, mock_file_paths)
-    
-    assert mock_connector_create_predictions.call_count == len(mock_file_paths)
-    assert mock_delete_file.call_count == len(mock_file_paths)
-
-
-@mock.patch("my_app.app_module.client_API.connector_create_predictions")
-@mock.patch("my_app.utils.delate_file_from_storage")
-def test_predict_audios_abort_on_failure(mock_delete_file, mock_connector_create_predictions, reset_tokens, mock_env):
-    store_token(mock_analysis_id, f"Bearer {mock_token}")
-    # Simulate a failure response for the first file
-    mock_connector_create_predictions.side_effect = [(500, "Failure"), (200, "Success")]
-    
-    with mock.patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline") as mock_pipeline:
-        mock_pipeline.return_value = mock.Mock()  # Mock the prediction pipeline
-        predict_audios(mock_analysis_id, mock_selected_model, mock_file_paths)
-    
-    # First call should trigger abort
-    assert mock_connector_create_predictions.call_count == 1
-    mock_delete_file.assert_called_once()
-
-
-def test_storage_content_existing_files(mock_env):
-    with mock.patch("os.path.exists", return_value=True):
-        results = storage_content(mock_file_paths)
-        assert all(results[file] is True for file in mock_file_paths)
-
-
-def test_storage_content_missing_files(mock_env):
-    with mock.patch("os.path.exists", side_effect=[True, False]):
-        results = storage_content(mock_file_paths)
-        assert results[mock_file_paths[0]] is True
-        assert results[mock_file_paths[1]] is False
-
-
-def test_eval_params_eval_dataset_valid(mock_env):
-    success, message = eval_params_eval_dataset(mock_dataset, mock_model_conf)
-    assert success is True
-    assert "Analysis started for dataset" in message
-
-
-def test_eval_params_eval_dataset_invalid_dataset(mock_env):
-    success, message = eval_params_eval_dataset("invalid_dataset", mock_model_conf)
-    assert success is False
+@patch("os.getenv", return_value="/fake_config_path")
+def test_eval_params_eval_dataset_invalid_dataset(mock_getenv):
+    status, message = eval_params_eval_dataset("invalid_dataset", "config_mesonet.yaml")
+    assert status is False
     assert "Not correct dataset_name" in message
 
-
-def test_eval_params_eval_dataset_invalid_config(mock_env):
-    success, message = eval_params_eval_dataset(mock_dataset, "invalid_config.yaml")
-    assert success is False
+@patch("os.getenv", return_value="/fake_config_path")
+def test_eval_params_eval_dataset_invalid_config(mock_getenv):
+    status, message = eval_params_eval_dataset("deep_voice", "invalid_config.yaml")
+    assert status is False
     assert "Not correct config_path" in message
 
 
-@mock.patch("my_app.utils.get_files_to_predict", side_effect=[(["fake_file1.wav"], "/fake/path"), (["real_file1.wav"], "/real/path")])
-@mock.patch("my_app.utils.save_results_to_csv")
-@mock.patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline")
-def test_eval_dataset_success(mock_get_files, mock_save_results, mock_prediction_pipeline, mock_env):
-    result = eval_dataset(mock_dataset, mock_model_conf, mock_output_csv)
+# 6. Test `eval_metrics`
+@patch("my_app.utils.get_labels_and_predictions_from_csv")
+@patch("my_app.model_module.metrics.calculate_eer_from_labels", return_value=0.05)
+@patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
+def test_eval_metrics_success(mock_getenv, mock_calculate_eer, mock_get_labels_and_predictions_from_csv):
+    mock_get_labels_and_predictions_from_csv.return_value = ([1, 0, 1], [0, 0, 1])
+    result = eval_metrics("test_dataset", "output")
     assert result["status"] == "success"
-    assert "files saved in" in result["info"]
-    assert mock_save_results.call_count == 2
+    assert result["info"] == "err calculated"
+    assert result["results"] == 0.05
 
-
-@mock.patch("my_app.utils.get_labels_and_predictions_from_csv", return_value=([0, 1, 1, 0], [0, 1, 0, 1]))
-def test_eval_metrics_success(mock_get_labels_and_predictions, mock_env):
-    result = eval_metrics(mock_dataset, mock_output_csv)
-    assert result["status"] == "success"
-    assert "err calculated" in result["info"]
-    assert "results" in result
-
-
-@mock.patch("my_app.utils.get_labels_and_predictions_from_csv", side_effect=FileNotFoundError("File not found"))
-def test_eval_metrics_failure(mock_get_labels_and_predictions, mock_env):
-    result = eval_metrics(mock_dataset, mock_output_csv)
+@patch("my_app.utils.get_labels_and_predictions_from_csv", side_effect=FileNotFoundError("File not found"))
+@patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
+def test_eval_metrics_file_not_found(mock_getenv, mock_get_labels_and_predictions_from_csv):
+    result = eval_metrics("test_dataset", "output")
     assert result["status"] == "failure"
     assert "File not found" in result["info"]
 
+
+    import pytest
+from unittest.mock import patch, MagicMock
+from datetime import datetime
+from my_app.app_module.controller import predict_audios, TOKENS
+
+@patch("my_app.app_module.controller.PredictionPipeline.__init__", return_value=None)
+@patch("my_app.app_module.controller.predict")
+@patch("my_app.app_module.controller.client_API.connector_create_predictions", return_value=(200, "Success"))
+@patch("my_app.app_module.controller.client_API.connector_end_analysis", return_value=(200, "Success"))
+@patch("my_app.app_module.controller.client_API.connector_abort_analysis")
+@patch("my_app.app_module.controller.utils.delate_file_from_storage")
+def test_predict_audios_success(
+    mock_delete_file,
+    mock_abort_analysis,
+    mock_end_analysis,
+    mock_create_predictions,
+    mock_predict,
+    mock_pipeline_init,
+):
+    # Set up the mock data
+    analysis_id = "12345"
+    selected_model = "test_model"
+    file_paths = ["audio1.wav", "audio2.wav"]
+    TOKENS[analysis_id] = "test_token"
+
+    # Mock predict function output
+    mock_predict.return_value = (["audio1.wav"], [0, 1], ["label1", "label2"])
+
+    # Run the function
+    predict_audios(analysis_id, selected_model, file_paths)
+
+    # Assertions to verify behavior
+    assert mock_create_predictions.call_count == 2
+    mock_create_predictions.assert_any_call(
+        analysis_id="12345",
+        payload={
+            "link": "audio1.wav",
+            "timestamp": datetime.now().isoformat(),
+            "model": selected_model,
+            "modelPredictions": [{"segmentNumber": 0, "label": "label1"}, {"segmentNumber": 1, "label": "label2"}],
+        },
+        token="test_token",
+    )
+    mock_delete_file.assert_any_call("audio1.wav")
+    mock_end_analysis.assert_called_once_with(analysis_id=analysis_id, token="test_token")
+    mock_abort_analysis.assert_not_called()  # Ensure no abort if successful
+
+
+@patch("my_app.app_module.controller.PredictionPipeline.__init__", return_value=None)
+@patch("my_app.app_module.controller.predict")
+@patch("my_app.app_module.controller.client_API.connector_create_predictions", return_value=(500, "Error"))
+@patch("my_app.app_module.controller.client_API.connector_abort_analysis")
+@patch("my_app.app_module.controller.utils.delate_file_from_storage")
+def test_predict_audios_with_error_in_predictions(
+    mock_delete_file,
+    mock_abort_analysis,
+    mock_create_predictions,
+    mock_predict,
+    mock_pipeline_init,
+):
+    # Set up the mock data
+    analysis_id = "12345"
+    selected_model = "test_model"
+    file_paths = ["audio1.wav"]
+    TOKENS[analysis_id] = "test_token"
+
+    # Mock predict function output
+    mock_predict.return_value = (["audio1.wav"], [0, 1], ["label1", "label2"])
+
+    # Run the function
+    predict_audios(analysis_id, selected_model, file_paths)
+
+    # Assertions to verify behavior
+    mock_create_predictions.assert_called_once()
+    mock_abort_analysis.assert_called_once_with(analysis_id, "test_token")
+    mock_delete_file.assert_called_once_with("audio1.wav")

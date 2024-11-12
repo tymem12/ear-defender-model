@@ -1,52 +1,92 @@
-import unittest
+import pytest
 from unittest.mock import Mock, patch
-from my_app.model_module.prediction_pipline.base_models import Model, MesonetModel, Wav2wec  # Replace 'your_module' with the actual module name
+from my_app.model_module.prediction_pipline.base_models import Model, MesonetModel, Wav2wec
 
-class TestModel(unittest.TestCase):
-
-    def setUp(self):
-        # Mock initialization strategy
-        self.mock_strategy = Mock()
-        self.mock_strategy.initialize.return_value = lambda x: f"initialized with {x}"
-        self.mock_strategy.config = {'model': {'threshold': 0.5}}
-
-    def test_mesonet_model_default_config(self):
-        model = MesonetModel(initialization_strategy=self.mock_strategy)
-        self.assertEqual(model.config_path, 'config_files/config_mesonet.yaml')
-
-    def test_wav2wec_default_config(self):
-        model = Wav2wec(initialization_strategy=self.mock_strategy)
-        self.assertEqual(model.config_path, 'config_files/config_wav2vec.yaml')
-
-    def test_predict_method_mesonet_model(self):
-        model = MesonetModel(initialization_strategy=self.mock_strategy)
-        model.initialized_model = Mock(return_value="prediction result")
-        result = model.predict("input data")
-        model.initialized_model.assert_called_once_with("input data")
-        self.assertEqual(result, "prediction result")
-
-    def test_predict_method_wav2wec(self):
-        model = Wav2wec(initialization_strategy=self.mock_strategy)
-        model.initialized_model = Mock(return_value="prediction result")
-        result = model.predict("input data")
-        model.initialized_model.assert_called_once_with("input data")
-        self.assertEqual(result, "prediction result")
-
-    def test_wav2wec_get_threshold_value(self):
-        model = Wav2wec(initialization_strategy=self.mock_strategy)
-        threshold = model.get_threshold_value()
-        self.assertEqual(threshold, 0.5)
-
-    def test_initialize_without_strategy_raises_error(self):
-        with self.assertRaises(ValueError):
-            MesonetModel().initialize_model()
-
-    @patch('my_app.model_module.prediction_pipline.base_models.Wav2wec.get_default_config', return_value='config_files/config_wav2vec.yaml')
-    def test_default_config_path_inheritance(self, mock_get_default_config):
-        model = Wav2wec(initialization_strategy=self.mock_strategy)
-        self.assertEqual(model.config_path, 'config_files/config_wav2vec.yaml')
-        mock_get_default_config.assert_called_once()
+# Test fixtures
+@pytest.fixture
+def mock_initialization_strategy():
+    """Creates a mock initialization strategy."""
+    strategy = Mock()
+    strategy.initialize = Mock(return_value=lambda x: f"Processed {x}")
+    strategy.config = {'model': {'threshold': 0.5}}
+    return strategy
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.fixture
+def mesonet_model(mock_initialization_strategy):
+    """Creates a MesonetModel with the mock initialization strategy."""
+    return MesonetModel(initialization_strategy=mock_initialization_strategy)
+
+
+@pytest.fixture
+def wav2wec_model(mock_initialization_strategy):
+    """Creates a Wav2wec model with the mock initialization strategy."""
+    return Wav2wec(initialization_strategy=mock_initialization_strategy)
+
+
+# Test Model Base Class
+def test_model_initialization_without_strategy():
+    """Tests that initializing a Model without a strategy raises an error."""
+    with pytest.raises(TypeError):
+        model = Model()  # Model is abstract and cannot be instantiated
+
+
+# Test MesonetModel
+def test_mesonet_default_config(mesonet_model):
+    """Tests that the MesonetModel returns the correct default config path."""
+    assert mesonet_model.get_default_config() == 'config_files/config_mesonet.yaml'
+
+
+def test_mesonet_initialization_with_strategy(mesonet_model, mock_initialization_strategy):
+    """Tests that the MesonetModel initializes with a strategy."""
+    assert mesonet_model.initialized_model("input_data") == "Processed input_data"
+    mock_initialization_strategy.initialize.assert_called_once_with(mesonet_model.config_path)
+
+
+def test_mesonet_prediction(mesonet_model):
+    """Tests the predict method of MesonetModel."""
+    result = mesonet_model.predict("test_input")
+    assert result == "Processed test_input"
+
+
+# Test Wav2wec Model
+def test_wav2wec_default_config(wav2wec_model):
+    """Tests that the Wav2wec model returns the correct default config path."""
+    assert wav2wec_model.get_default_config() == 'config_files/config_wav2vec.yaml'
+
+
+def test_wav2wec_initialization_with_strategy(wav2wec_model, mock_initialization_strategy):
+    """Tests that the Wav2wec model initializes with a strategy."""
+    assert wav2wec_model.initialized_model("input_data") == "Processed input_data"
+    mock_initialization_strategy.initialize.assert_called_once_with(wav2wec_model.config_path)
+
+
+def test_wav2wec_prediction(wav2wec_model):
+    """Tests the predict method of Wav2wec."""
+    result = wav2wec_model.predict("test_input")
+    assert result == "Processed test_input"
+
+
+def test_wav2wec_get_threshold_value(wav2wec_model):
+    """Tests the get_threshold_value method of Wav2wec."""
+    assert wav2wec_model.get_threshold_value() == 0.5
+
+
+# Test Initialization without Strategy
+def test_initialization_without_strategy():
+    """Tests initializing MesonetModel or Wav2wec without an initialization strategy."""
+    with pytest.raises(ValueError, match="Initialization strategy is not provided."):
+        MesonetModel(config_path="dummy_config.yaml").initialize_model()
+    with pytest.raises(ValueError, match="Initialization strategy is not provided."):
+        Wav2wec(config_path="dummy_config.yaml").initialize_model()
+
+
+# Parameterized Tests for Configurations
+@pytest.mark.parametrize("model_class, expected_config", [
+    (MesonetModel, 'config_files/config_mesonet.yaml'),
+    (Wav2wec, 'config_files/config_wav2vec.yaml')
+])
+def test_get_default_config(model_class, expected_config, mock_initialization_strategy):
+    """Parameterized test to check get_default_config for each model."""
+    model_instance = model_class(initialization_strategy=mock_initialization_strategy)
+    assert model_instance.get_default_config() == expected_config

@@ -1,7 +1,7 @@
 # from uuid import UUID
 from datetime import datetime
 from my_app.model_module.evaluate_audios import predict
-from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline, ModelFactory, ModelStore
+from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline, ModelFactory
 from my_app.app_module import client_API
 from my_app import utils
 from my_app.model_module import metrics

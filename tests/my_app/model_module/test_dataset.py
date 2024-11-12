@@ -1,105 +1,96 @@
-import unittest
-from unittest.mock import patch, MagicMock
+import pytest
 import numpy as np
 import torch
-import os
+from torch import Tensor
+from unittest.mock import patch, MagicMock
 from my_app.model_module.dataset import Dataset_Custom, pad
+import logging
 
-class TestDatasetCustom(unittest.TestCase):
+# Fixtures for the tests
+@pytest.fixture
+def sample_list_IDs():
+    """Sample list of audio file identifiers."""
+    return ["audio1.wav", "audio2.wav"]
 
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    def setUp(self, mock_listdir, mock_exists):
-        # Mock existence of audio files
-        self.list_IDs = ["audio_1.m4a", "audio_2.m4a", "missing_audio.m4a"]
-        self.base_dir = "/fake_dir"
-        mock_exists.side_effect = lambda x: x != os.path.join(self.base_dir, "missing_audio.m4a")
-        mock_listdir.return_value = ["audio_1.m4a", "audio_2.m4a"]
+@pytest.fixture
+def mock_audio_data():
+    """Fixture that provides mock audio data with a known length."""
+    return np.random.randn(64600 * 2 + 5000), 16000  # 2 full chunks and a remainder
 
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_prepare_dataset(self, mock_load, mock_exists):
-        # Mock loading of audio files with varying lengths
-        mock_load.side_effect = [
-            (np.random.randn(160000), 16000),  # 10 seconds
-            (np.random.randn(320000), 16000),  # 20 seconds
-            (np.array([]), 16000)              # Empty (simulating missing or corrupt)
-        ]
+@pytest.fixture
+def mock_base_dir(tmp_path):
+    """Temporary directory for storing mock audio files."""
+    return tmp_path
 
-        dataset = Dataset_Custom(self.list_IDs, self.base_dir)
-        self.assertEqual(len(dataset), 8, "Incorrect number of segments prepared.")
-        
-        # Verifying segments created for each valid file
-        self.assertIn(("audio_1.m4a", 0), dataset.audio_segments)
-        self.assertIn(("audio_1.m4a", 1), dataset.audio_segments)
-        self.assertIn(("audio_2.m4a", 0), dataset.audio_segments)
-        self.assertIn(("audio_2.m4a", 1), dataset.audio_segments)
-        self.assertNotIn(("missing_audio.m4a", 0), dataset.audio_segments, "Segments should not be created for missing files.")
-        
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_getitem_with_padding(self, mock_load, mock_exists):
-        # Load audio with fewer than 'cut' samples to trigger padding
-        mock_load.return_value = (np.random.randn(32000), 16000)  # 2 seconds of audio
-        
-        dataset = Dataset_Custom(["audio_1.m4a"], self.base_dir)
-        x_inp, (utt_id, segment_num) = dataset[0]
-        
-        self.assertEqual(x_inp.shape[0], dataset.cut, "Audio segment length should match cut size with padding.")
-        self.assertEqual((utt_id, segment_num), ("audio_1.m4a", 0), "Incorrect utt_id or segment number returned.")
+@pytest.fixture
+def mock_librosa_load(mock_audio_data):
+    """Mock librosa.load to return predefined mock audio data."""
+    with patch("librosa.load", return_value=mock_audio_data) as mock_load:
+        yield mock_load
 
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_getitem_without_padding(self, mock_load, mock_exists):
-        # Load audio with exactly the cut size
-        mock_load.return_value = (np.random.randn(64600), 16000)
-        
-        dataset = Dataset_Custom(["audio_1.m4a"], self.base_dir)
-        x_inp, (utt_id, segment_num) = dataset[0]
-        
-        self.assertEqual(x_inp.shape[0], dataset.cut, "Audio segment length should match cut size without padding.")
-        self.assertEqual((utt_id, segment_num), ("audio_1.m4a", 0), "Incorrect utt_id or segment number returned.")
+# Tests
+def test_dataset_custom_initialization(sample_list_IDs, mock_base_dir, mock_librosa_load):
+    """Test initialization and dataset preparation in Dataset_Custom."""
+    with patch("os.path.exists", return_value=True):
+        dataset = Dataset_Custom(list_IDs=sample_list_IDs, base_dir=str(mock_base_dir))
 
-    def test_padding_function(self):
-        # Test padding on short array
-        short_audio = np.array([0.1, 0.2, 0.3])
-        padded_audio = pad(short_audio, 64600)
-        
-        self.assertEqual(len(padded_audio), 64600, "Padded audio length should match the max_len parameter.")
-        self.assertTrue(np.allclose(padded_audio[:3], short_audio), "Padded audio should start with the original audio.")
+    # Ensure librosa.load is called for each file
+    assert mock_librosa_load.call_count == len(sample_list_IDs)
+
+    # Verify the number of segments calculated based on audio data length and chunk size
+    expected_segments = 3 * len(sample_list_IDs)  # 2 full chunks + 1 remainder for each file
+    assert len(dataset.audio_segments) == expected_segments
+    assert len(dataset) == expected_segments
+
+
+def test_dataset_custom_getitem(sample_list_IDs, mock_base_dir, mock_librosa_load):
+    """Test the __getitem__ method in Dataset_Custom."""
+    with patch("os.path.exists", return_value=True):
+        dataset = Dataset_Custom(list_IDs=sample_list_IDs, base_dir=str(mock_base_dir))
+
+    # Retrieve an item from the dataset
+    x_inp, (utt_id, segment_num) = dataset[0]
+
+    # Check that the output is a Tensor and has the correct shape
+    assert isinstance(x_inp, Tensor)
+    assert x_inp.shape[0] == 64600  # Should be the size of each chunk (cut length)
+
+    # Check that utt_id and segment_num are correctly returned
+    assert utt_id == "audio1.wav"
+    assert segment_num == 0
+
+
+def test_dataset_custom_padding():
+    """Test the pad function for handling shorter segments."""
+    x_short = np.random.randn(32000)  # Less than the cut length
+    padded_x = pad(x_short, max_len=64600)
+
+    # Check that the padded segment has the correct length
+    assert len(padded_x) == 64600
+
+    # Check that padding is correctly applied
+    assert np.array_equal(padded_x[:32000], x_short)  # Original data should be at the start
+    assert len(padded_x[32000:]) > 0  # Ensure padding is applied
+
+
+def test_dataset_custom_missing_file(sample_list_IDs, mock_base_dir, mock_librosa_load, caplog):
+    """Test that a missing file is logged and handled gracefully."""
+    with patch("os.path.exists", side_effect=[False, True]), patch("os.listdir", return_value=["audio2.wav"]):
+        with caplog.at_level(logging.INFO):
+            dataset = Dataset_Custom(list_IDs=sample_list_IDs, base_dir=str(mock_base_dir))
     
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_dataset_length_with_empty_audio(self, mock_load, mock_exists):
-        # Test with an empty audio file (edge case)
-        mock_load.return_value = (np.array([]), 16000)
-        
-        dataset = Dataset_Custom(["audio_1.m4a"], self.base_dir)
-        self.assertEqual(len(dataset), 0, "Dataset length should be zero for empty audio files.")
+    # Check log for missing file message
+    assert "File" in caplog.text
+    assert "doesn't exist" in caplog.text
+    assert len(dataset) == 3  # Only the existing file (audio2.wav) should have segments
 
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_dataset_length_with_single_short_file(self, mock_load, mock_exists):
-        # Test with one file, shorter than `cut`, to verify it only creates one segment
-        mock_load.return_value = (np.random.randn(32000), 16000)  # Shorter than cut
-        
-        dataset = Dataset_Custom(["audio_1.m4a"], self.base_dir)
-        self.assertEqual(len(dataset), 1, "Dataset length should be one for a single short file.")
-        
-    @patch("os.path.exists", return_value=True)
-    @patch("librosa.load")
-    def test_multiple_files_with_mixed_lengths(self, mock_load, mock_exists):
-        # Test with files of various lengths
-        mock_load.side_effect = [
-            (np.random.randn(160000), 16000),  # 10 seconds 2,5 fragments -> 3 segments
-            (np.random.randn(320000), 16000),  # 20 seconds 5 fragments -> 5 segments
-            (np.random.randn(10000), 16000)    # < 1 fragments -> 1 segment
-        ]
-        
-        dataset = Dataset_Custom(self.list_IDs[:3], self.base_dir)
-        self.assertEqual(len(dataset), 9, "Dataset length should account for the total number of chunks across files.")
+
+def test_dataset_custom_length_and_segments(sample_list_IDs, mock_base_dir, mock_librosa_load):
+    """Test that dataset length matches the number of prepared segments."""
+    with patch("os.path.exists", return_value=True):
+        dataset = Dataset_Custom(list_IDs=sample_list_IDs, base_dir=str(mock_base_dir))
     
-
-# Run the tests
-if __name__ == "__main__":
-    unittest.main()
+    # Each file has 2 full chunks and 1 partial chunk
+    expected_length = 3 * len(sample_list_IDs)
+    assert len(dataset) == expected_length
+    assert len(dataset.audio_segments) == expected_length

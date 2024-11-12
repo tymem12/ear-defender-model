@@ -18,7 +18,7 @@ def get_files_to_predict(dataset: str, status: str):
         with open(path_to_csv, mode='r') as file:
             reader = csv.reader(file)
             next(reader, None)  # Skip header
-            list_IDs = [row[0] for row in reader if row and int(row[2]) == status_file]
+            list_IDs = [row[0] for row in reader if row and row[2] == status_file]
         path_to_folder = f'{audio_storage_test}/{dataset}'
     
     elif dataset == 'example':
@@ -94,7 +94,8 @@ def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
 
     return scores_spoof, scores_real
 
-def delate_file_from_storage(link: str, base_dir = os.getenv('AUDIO_STORAGE')):
+def delate_file_from_storage(link: str, base_dir = None):
+    if base_dir is None:
+        base_dir = os.getenv('AUDIO_STORAGE')
     file_path = f'{base_dir}/{link}'
     os.remove(file_path)
- 

@@ -42,7 +42,7 @@ class Wav2vecInitialization(InitializationStrategy):
         model = Model(args=self.parameters, device=self.device)
         model = nn.DataParallel(model).to(self.device)
         model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
-        model.to(self.device)
+        # model.to(self.device)
         # print(f"Initializing Wav2vec model with config: {config_path}")
         return model
 
