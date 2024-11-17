@@ -10,4 +10,4 @@ services:
     volumes:
       - ../storage:/app/storage
       - ./results_csv:/app/results_csv
-      - ../datasets:/app/datasets
+      - ./datasets:/app/datasets

@@ -101,7 +101,7 @@ def storage_content(file_paths: List[str]):
 def eval_params_eval_dataset(dataset:str, model_conf: str, output_csv = str):
     config_path = os.getenv('CONFIG_FOLDER') + '/' +model_conf
     available_datasets = ['deep_voice', 'fake_audio', 'my_eng', 'my_pol', 'release_in_the_wild', 'test_dataset', 'example']
-    available_configs = ['config_mesonet.yaml', 'config_mesonet_finetuned.yaml', 'config_wav2vec.yaml']
+    available_configs = ['config_mesonet.yaml', 'config_mesonet_finetuned.yaml', 'config_mesonet_ft_asp.yaml','config_wav2vec.yaml']
 
     if dataset not in available_datasets:
          return False, f'Not correct dataset_name. You passed {dataset} but available_datasets are: {available_datasets}' 
@@ -134,7 +134,7 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
     for file in files_real:
         files, fragments, results = predict(prediction_pipline, file_paths=[file], base_dir= folder_path_real)
         utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
-    
+    logging.info(f"files saved in {results_csv_path_fake} and {results_csv_path_real}")
     return {
             "status": "success",
             "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"
@@ -142,23 +142,42 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
 
 
 
+# def eval_metrics(dataset:str, output_csv):
+#     results_folder = os.getenv('RESULTS_CSV')
+#     try:
+#         predictions, labels = utils.get_labels_and_predictions_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
+#     except FileNotFoundError as e:
+#         return{
+#         "status": "failure",
+#         "info": str(e),
+#         }
+#     eer = metrics.calculate_eer_from_labels(predictions, labels)
+#     return {
+#         "status": "success",
+#         "info": 'err calculated',
+#         "results" : eer  # For example, "Unknown model: <model_name>"}
+#     }
 def eval_metrics(dataset:str, output_csv):
     results_folder = os.getenv('RESULTS_CSV')
     try:
-        predictions, labels = utils.get_labels_and_predictions_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
+        scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
     except FileNotFoundError as e:
         return{
         "status": "failure",
         "info": str(e),
         }
-    eer = metrics.calculate_eer_from_labels(predictions, labels)
-    return {
-        "status": "success",
-        "info": 'err calculated',
-        "results" : eer  # For example, "Unknown model: <model_name>"}
-    }
-
-
+    eer , _= metrics.calculate_eer_from_scores(scores_spoof, scores_real)
+    if eer:
+        return {
+            "status": "success",
+            "info": 'err calculated',
+            "results" : eer  # For example, "Unknown model: <model_name>"}
+        }
+    else:
+        return {
+            "status": "failure",
+            "info": _,
+        }
 
 
 
