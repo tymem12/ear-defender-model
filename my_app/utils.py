@@ -73,16 +73,19 @@ def get_labels_and_predictions_from_csv(spoof_links: List[str], real_links: List
 
     return predictions, labels
 
-def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
-    scores_spoof = []
-    scores_real = []
+
+
+def get_scores_and_predictions_from_csv(spoof_links: List[str], real_links: List[str]):
+    predictions = []
+    labels = []
     for spoof_link in spoof_links:
         if os.path.isfile(spoof_link):
             with open(spoof_link, mode='r') as file:
                 reader = csv.reader(file)
                 next(reader)
                 for row in reader:
-                    scores_spoof.append(float(row[2]))
+                    predictions.append(int(row[2]))
+                    labels.append(0)
 
     for real_link in real_links:
         if os.path.isfile(real_link):
@@ -90,7 +93,36 @@ def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
                 reader = csv.reader(file)
                 next(reader)
                 for row in reader:
-                    scores_real.append(float(row[2]))
+                    predictions.append(int(row[2]))
+                    labels.append(1)
+
+    return predictions, labels
+
+
+
+def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
+    scores_spoof = []
+    scores_real = []
+
+    # Process spoof links
+    for spoof_link in spoof_links:
+        if not os.path.isfile(spoof_link):
+            raise FileNotFoundError(f"Spoof link file not found: {spoof_link}")
+        with open(spoof_link, mode='r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                scores_spoof.append(float(row[2]))
+
+    # Process real links
+    for real_link in real_links:
+        if not os.path.isfile(real_link):
+            raise FileNotFoundError(f"Real link file not found: {real_link}")
+        with open(real_link, mode='r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                scores_real.append(float(row[2]))
 
     return scores_spoof, scores_real
 
