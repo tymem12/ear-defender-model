@@ -52,3 +52,8 @@ The Detector Module provides several endpoints, which are accessible via the API
    - While these endpoints are open for users, they are not utilized by the connector module.
 
 ---
+
+## tests:
+bash -c "source activate SSL_Spoofing && pytest tests"
+pytest --cov=your_module_or_directory tests/
+

@@ -22,33 +22,25 @@ def test_load_config():
             mock_safe_load.assert_called_once()
 
 
-@patch("os.getenv", return_value="/mock_audio_datasets")
+@patch("os.path.isfile", return_value=True)  # Mock isfile to always return True
+@patch("os.getenv", return_value="/mock_audio_datasets")  # Mock getenv
 @patch("builtins.open", new_callable=mock_open, read_data="row1,row2,row3\nfile1,unused,spoof\nfile2,unused,spoof\n")
-def test_get_files_to_predict(mock_open, mock_getenv):
+def test_get_files_to_predict(mock_open, mock_getenv, mock_isfile):
+
     file_list, folder = get_files_to_predict("release_in_the_wild", "fake")
-    assert file_list == ["file1", 'file2']
+    assert file_list == ["file1", "file2"]
     assert folder == "/mock_audio_datasets/release_in_the_wild"
-    
+
+    # Ensure the mocks were called as expected
+    mock_isfile.assert_called_once_with("/mock_audio_datasets/release_in_the_wild/meta.csv")
     mock_open.assert_called_once_with("/mock_audio_datasets/release_in_the_wild/meta.csv", mode='r')
     mock_getenv.assert_called_once_with("AUDIO_DATASETS")
 
-@patch("os.getenv", return_value="/mock_audio_datasets")
-@patch("builtins.open", new_callable=mock_open, read_data="row1,row2\nfile3,1\nfile4,0\nfile5,1\n")
-def test_get_files_to_predict_example_real(mock_open, mock_getenv):
-    file_list, folder = get_files_to_predict("example", "real")
-    
-    # Check that the correct list of files and folder path are returned
-    assert file_list == ["file3", "file5"]
-    assert folder == "/mock_audio_datasets/example"
-    
-    # Verify the function calls for opening the correct file and fetching the environment variable
-    mock_open.assert_called_once_with("/mock_audio_datasets/example/example.csv", mode='r')
-    mock_getenv.assert_called_once_with("AUDIO_DATASETS")
 
-# Test for a custom dataset with status "train"
-@patch("os.getenv", return_value="/mock_audio_datasets")
+@patch("os.path.isfile", return_value=True)  # Mock isfile to always return True
+@patch("os.getenv", return_value="/mock_audio_datasets")  # Mock getenv
 @patch("builtins.open", new_callable=mock_open, read_data="row1,row2\nfile6,unused\nfile7,unused\nfile8,unused\n")
-def test_get_files_to_predict_custom_dataset_train(mock_open, mock_getenv):
+def test_get_files_to_predict_custom_dataset_train(mock_open, mock_getenv, mock_isfile):
     file_list, folder = get_files_to_predict("custom_dataset", "train")
     
     # Check that the correct list of files and folder path are returned

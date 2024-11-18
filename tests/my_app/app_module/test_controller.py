@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 from my_app.app_module.controller import store_token, evaluate_parameters_model_run, get_models, storage_content, eval_params_eval_dataset, eval_metrics, TOKENS
 import os
-
+from datetime import datetime
+from my_app.app_module.controller import predict_audios, TOKENS
 # 1. Test `store_token`
 def test_store_token():
     analysis_id = "123"
@@ -88,8 +89,8 @@ def test_eval_params_eval_dataset_invalid_config(mock_getenv):
 
 
 # 6. Test `eval_metrics`
-@patch("my_app.utils.get_labels_and_predictions_from_csv")
-@patch("my_app.model_module.metrics.calculate_eer_from_labels", return_value=0.05)
+@patch("my_app.utils.get_scores_from_csv")
+@patch("my_app.model_module.metrics.calculate_eer_from_scores", return_value=(0.05, []))
 @patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
 def test_eval_metrics_success(mock_getenv, mock_calculate_eer, mock_get_labels_and_predictions_from_csv):
     mock_get_labels_and_predictions_from_csv.return_value = ([1, 0, 1], [0, 0, 1])
@@ -98,7 +99,7 @@ def test_eval_metrics_success(mock_getenv, mock_calculate_eer, mock_get_labels_a
     assert result["info"] == "err calculated"
     assert result["results"] == 0.05
 
-@patch("my_app.utils.get_labels_and_predictions_from_csv", side_effect=FileNotFoundError("File not found"))
+@patch("my_app.utils.get_scores_from_csv", side_effect=FileNotFoundError("File not found"))
 @patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
 def test_eval_metrics_file_not_found(mock_getenv, mock_get_labels_and_predictions_from_csv):
     result = eval_metrics("test_dataset", "output")
@@ -106,10 +107,7 @@ def test_eval_metrics_file_not_found(mock_getenv, mock_get_labels_and_prediction
     assert "File not found" in result["info"]
 
 
-    import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime
-from my_app.app_module.controller import predict_audios, TOKENS
+
 
 @patch("my_app.app_module.controller.PredictionPipeline.__init__", return_value=None)
 @patch("my_app.app_module.controller.predict")
@@ -134,8 +132,14 @@ def test_predict_audios_success(
     # Mock predict function output
     mock_predict.return_value = (["audio1.wav"], [0, 1], ["label1", "label2"])
 
-    # Run the function
-    predict_audios(analysis_id, selected_model, file_paths)
+    # Mock timestamp to ensure consistency
+    mock_timestamp = "2024-11-18T17:44:00.590503"
+    with patch("my_app.app_module.controller.datetime") as mock_datetime:
+        mock_datetime.now.return_value = datetime.fromisoformat(mock_timestamp)
+        mock_datetime.now.isoformat.return_value = mock_timestamp
+
+        # Run the function
+        predict_audios(analysis_id, selected_model, file_paths)
 
     # Assertions to verify behavior
     assert mock_create_predictions.call_count == 2
@@ -143,16 +147,18 @@ def test_predict_audios_success(
         analysis_id="12345",
         payload={
             "link": "audio1.wav",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": mock_timestamp,
             "model": selected_model,
-            "modelPredictions": [{"segmentNumber": 0, "label": "label1"}, {"segmentNumber": 1, "label": "label2"}],
+            "modelPredictions": [
+                {"segmentNumber": 0, "label": "label1"},
+                {"segmentNumber": 1, "label": "label2"},
+            ],
         },
         token="test_token",
     )
     mock_delete_file.assert_any_call("audio1.wav")
     mock_end_analysis.assert_called_once_with(analysis_id=analysis_id, token="test_token")
     mock_abort_analysis.assert_not_called()  # Ensure no abort if successful
-
 
 @patch("my_app.app_module.controller.PredictionPipeline.__init__", return_value=None)
 @patch("my_app.app_module.controller.predict")

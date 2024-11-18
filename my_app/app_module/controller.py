@@ -125,15 +125,19 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
     # try:
     prediction_pipline = PredictionPipeline(model_name, config_path = config_path,return_labels = True, return_scores = True)
     results_folder = os.getenv('RESULTS_CSV')
+
     results_csv_path_fake = f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'
     for file in files_fake:
         files, fragments, results = predict(prediction_pipline, file_paths=[file], base_dir= folder_path_fake)
         utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_fake)
+        logging.info(file + " saved")
 
     results_csv_path_real = f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'
     for file in files_real:
         files, fragments, results = predict(prediction_pipline, file_paths=[file], base_dir= folder_path_real)
         utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
+        logging.info(file + " saved")
+
     logging.info(f"files saved in {results_csv_path_fake} and {results_csv_path_real}")
     return {
             "status": "success",

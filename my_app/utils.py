@@ -14,24 +14,19 @@ def get_files_to_predict(dataset: str, status: str):
 
     if dataset == 'release_in_the_wild':
         path_to_csv = f'{audio_storage_test}/{dataset}/meta.csv'
+        if not os.path.isfile(path_to_csv):
+            raise FileExistsError(f'path {path_to_csv} does not exists')
         status_file = 'spoof' if status == 'fake' else 'bona-fide'
         with open(path_to_csv, mode='r') as file:
             reader = csv.reader(file)
             next(reader, None)  # Skip header
             list_IDs = [row[0] for row in reader if row and row[2] == status_file]
         path_to_folder = f'{audio_storage_test}/{dataset}'
-    
-    elif dataset == 'example':
-        path_to_csv = f'{audio_storage_test}/{dataset}/example.csv'
-        with open(path_to_csv, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader, None)  # Skip header
-            status_file = 0 if status == 'fake' else 1
-            list_IDs = [row[0] for row in reader if row and int(row[1]) == status_file]
-        path_to_folder = f'{audio_storage_test}/{dataset}'
 
     else:
         path_to_csv = f'{audio_storage_test}/{dataset}/{dataset}_data_{status}.csv'
+        if not os.path.isfile(path_to_csv):
+            raise FileExistsError(f'path {path_to_csv} does not exists')
         with open(path_to_csv, mode='r') as file:
             reader = csv.reader(file)
             next(reader, None)  # Skip header
