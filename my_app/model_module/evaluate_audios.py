@@ -4,8 +4,8 @@ from typing import List
 import os
 from my_app.model_module.dataset import Dataset_Custom
 from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline
+import logging
 
-# def predict(model_manager: ModelManager, file_paths : List[str], base_dir = os.getenv('AUDIO_STORAGE')):
 def predict(prediction_pipline:PredictionPipeline , file_paths : List[str], base_dir = os.getenv('AUDIO_STORAGE')):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -13,23 +13,29 @@ def predict(prediction_pipline:PredictionPipeline , file_paths : List[str], base
     fname_list = []
     fragment_list = []
     model_output_list= []
+    i = 0
 
 
     for file_path in file_paths:
-        dataset = Dataset_Custom(list_IDs=[file_path], base_dir=base_dir)
+        try:
+            dataset = Dataset_Custom(list_IDs=[file_path], base_dir=base_dir)
+        except FileExistsError as e:
+            logging.error('Error in predict. File skipped: ' +str(e))
+            continue
+
         data_loader = DataLoader(dataset, batch_size=10, shuffle=False, drop_last=False) 
         for batch_x, (file_name, idx) in data_loader:
             
             batch_x = batch_x.to(device)
-            
             batch_out = prediction_pipline.predict(batch_x)
-            
-
+            logging.info(f'Batch {i} predicted')
+            i +=1
             idx_list = [t.item() for t in idx]          
             # Add outputs for current batch
             fname_list.extend(file_name)
             fragment_list.extend(idx_list)
             model_output_list.extend(batch_out)
+        dataset.clean_dataset()
 
             
 

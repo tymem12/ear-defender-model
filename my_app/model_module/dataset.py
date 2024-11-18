@@ -18,6 +18,7 @@ class Dataset_Custom(Dataset):
         self.base_dir = base_dir
         self.cut = 64600 # length of each audio chunk (~4 seconds)
         self.audio_segments = []
+        self.audios = {}
         self._prepare_dataset()
 
     def _prepare_dataset(self):
@@ -34,13 +35,11 @@ class Dataset_Custom(Dataset):
             if not os.path.exists(audio_path):
                 logging.info(f"File {audio_path} doesn't exist.")
 
-                # Get the number of files in the base directory and print
-                num_files = len([f for f in os.listdir(self.base_dir) if os.path.isfile(os.path.join(self.base_dir, f))])
-                logging.info(f"Number of files in the folder '{self.base_dir}': {num_files}")
-                continue 
+                raise FileExistsError(f'file {utt_id} does not exists')
 
             X, fs = librosa.load(audio_path, sr=16000)
-
+            self.audios[utt_id] = X
+    
             # Calculate how many full chunks we can make from the audio
             
             num_full_chunks = len(X) // self.cut
@@ -49,7 +48,7 @@ class Dataset_Custom(Dataset):
             # Create tuples of (utt_id, segment number) for each chunk
             for i in range(num_full_chunks):
                 self.audio_segments.append((utt_id, i))
-
+            # self.audio_segments = [(utt_id, idx) for idx in range(num_full_chunks)]
 
             # Add the remainder as an additional padded chunk if needed
             if remainder > 0:
@@ -60,9 +59,8 @@ class Dataset_Custom(Dataset):
 
     def __getitem__(self, index):
         utt_id, segment_num = self.audio_segments[index]
-        audio_path = os.path.join(self.base_dir, utt_id)
-        X, fs = librosa.load(audio_path, sr=16000)
-
+        # audio_path = os.path.join(self.base_dir, utt_id)
+        X = self.audios[utt_id]
         # Extract the relevant segment of the audio
         start = segment_num * self.cut
         end = min(start + self.cut, len(X))  # Ensure we don't go out of bounds
@@ -74,6 +72,8 @@ class Dataset_Custom(Dataset):
 
         x_inp = Tensor(X_segment)
         return x_inp, (utt_id, segment_num)
+    def clean_dataset(self):
+        self.audios = {}
 
 def pad(x, max_len=64600):
     x_len = len(x)
