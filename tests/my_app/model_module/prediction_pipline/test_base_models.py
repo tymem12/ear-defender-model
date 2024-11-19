@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from my_app.model_module.prediction_pipline.base_models import Model, MesonetModel, Wav2wec
+from my_app.model_module.prediction_pipeline.base_models import Model, MesonetModel, Wav2wec
 
 # Test fixtures
 @pytest.fixture

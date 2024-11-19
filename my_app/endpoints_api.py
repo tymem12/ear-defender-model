@@ -1,9 +1,7 @@
+from typing import List
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
-from uuid import UUID
-from typing import List
 from my_app.app_module import controller
-from my_app.model_module.prediction_pipline.model_factory import PredictionPipeline
 
 app = FastAPI()
 

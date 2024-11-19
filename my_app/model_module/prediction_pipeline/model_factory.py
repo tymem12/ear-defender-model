@@ -1,14 +1,15 @@
-from my_app.model_module.prediction_pipline import base_models as bm
-from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
-from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
-from typing import Dict, Optional
 import logging
+from typing import Dict, Optional
+from torch import Tensor
+from my_app.model_module.prediction_pipeline import base_models as bm
+from my_app.model_module.prediction_pipeline import postprocessing_strategy as ps
+from my_app.model_module.prediction_pipeline import initialization_strategy as init_strat
 
 class ModelFactory:
     _available_models = ['mesonet', 'wav2vec']
 
     @staticmethod
-    def create_model(model_name, config_path=None):
+    def create_model(model_name: str, config_path=None):
         if model_name == 'mesonet':
             initialization_strategy = init_strat.MesonetInitialization()
             return bm.MesonetModel(config_path, initialization_strategy)
@@ -19,7 +20,7 @@ class ModelFactory:
             raise ValueError(f"Unknown model: {model_name}")
         
     @staticmethod
-    def model_exists(model_name):
+    def model_exists(model_name: str):
         return model_name in ModelFactory._available_models
     
     @staticmethod
@@ -28,14 +29,14 @@ class ModelFactory:
     
 
 class PredictionPipeline:
-    def __init__(self, model_name, config_path=None, return_labels = True, return_scores = True):
+    def __init__(self, model_name : str, config_path:str = None, return_labels : bool= True, return_scores :bool= True):
         self.return_labels = return_labels
         self.return_scores = return_scores
         self.model = ModelFactory.create_model(model_name, config_path)
         self.postprocessing_strategy = self._get_postprocessing_strategy(model_name)
         self.model.initialized_model.eval()
 
-    def _get_postprocessing_strategy(self, model_name):
+    def _get_postprocessing_strategy(self, model_name:str):
         if model_name == 'wav2vec':
             return ps.Wav2vecPostprocessing(self.model.get_threshold_value())
         elif model_name == 'mesonet':
@@ -44,7 +45,7 @@ class PredictionPipeline:
             raise ValueError(f"Unknown postprocessing for model: {model_name}")
         
 
-    def predict(self, input_data):
+    def predict(self, input_data: Tensor):
 
         prediction = self.model.predict(input_data)
         model_output = self.postprocessing_strategy.process(prediction, self.return_scores, self.return_labels)

@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import Mock, patch
 import torch
-from my_app.model_module.prediction_pipline import base_models as bm
-from my_app.model_module.prediction_pipline.model_factory import ModelFactory, PredictionPipeline
-from my_app.model_module.prediction_pipline import postprocessing_strategy as ps
-from my_app.model_module.prediction_pipline import initialization_strategy as init_strat
+from my_app.model_module.prediction_pipeline import base_models as bm
+from my_app.model_module.prediction_pipeline.model_factory import ModelFactory, PredictionPipeline
+from my_app.model_module.prediction_pipeline import postprocessing_strategy as ps
+from my_app.model_module.prediction_pipeline import initialization_strategy as init_strat
 
 
 # Tests for ModelFactory

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+from torch import Tensor
 # Base Model Interface
 class Model(ABC):
     def __init__(self, config_path=None, initialization_strategy=None):
@@ -23,18 +23,16 @@ class Model(ABC):
             raise ValueError("Initialization strategy is not provided.")
 
     @abstractmethod
-    def predict(self, input_data):
+    def predict(self, input_data:Tensor):
         """Run the prediction on input data."""
         pass
 
 
 class MesonetModel(Model):
-    def get_default_config(self):
+    def get_default_config(self) -> str:
         return 'config_files/config_mesonet.yaml'
 
-    def predict(self, input_data):
-
-        # print(f"ModelA predictions for {input_data}")
+    def predict(self, input_data:Tensor) :
         return self.initialized_model(input_data)
     
 
@@ -43,10 +41,9 @@ class Wav2wec(Model):
     def get_default_config(self):
         return 'config_files/config_wav2vec.yaml'
 
-    def predict(self, input_data):
-        # print(f"ModelB predictions for {input_data}")
+    def predict(self, input_data:Tensor):
         return self.initialized_model(input_data)
     
-    def get_threshold_value(self):
+    def get_threshold_value(self) -> float:
         return self.initialization_strategy.config['model']['threshold']
 

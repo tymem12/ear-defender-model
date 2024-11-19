@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
 import torch
-from my_app.model_module.prediction_pipline.initialization_strategy import MesonetInitialization, Wav2vecInitialization
+from my_app.model_module.prediction_pipeline.initialization_strategy import MesonetInitialization, Wav2vecInitialization
 
 
 # Fixtures
@@ -32,7 +32,7 @@ def mock_meso_net():
 def mock_wav2vec_model():
     """Mock the Wav2vec Model class and its methods."""
     # Patch the Model class at the exact path where it is used in initialization_strategy.py
-    with patch('my_app.model_module.prediction_pipline.initialization_strategy.Model') as MockWav2vecModel:
+    with patch('my_app.model_module.prediction_pipeline.initialization_strategy.Model') as MockWav2vecModel:
         # Mock the model instance
         mock_instance = MockWav2vecModel.return_value
         mock_instance.load_state_dict = Mock()  # Mock `load_state_dict` to prevent errors
@@ -70,7 +70,7 @@ def mock_fairseq_checkpoint():
 # Tests for MesonetInitialization
 def test_mesonet_initialization(mock_load_config, mock_meso_net, mock_torch_load):
     """Tests MesonetInitialization model setup and state dict loading."""
-    with patch('my_app.model_module.prediction_pipline.initialization_strategy.load_config', return_value=mock_load_config):
+    with patch('my_app.model_module.prediction_pipeline.initialization_strategy.load_config', return_value=mock_load_config):
         strategy = MesonetInitialization()
         model = strategy.initialize('dummy_config_path')
 
@@ -94,7 +94,7 @@ def test_mesonet_initialization(mock_load_config, mock_meso_net, mock_torch_load
 # Tests for Wav2vecInitialization
 def test_wav2vec_initialization(mock_load_config, mock_wav2vec_model, mock_torch_load, mock_data_parallel, mock_fairseq_checkpoint):
     """Tests Wav2vecInitialization model setup and state dict loading."""
-    with patch('my_app.model_module.prediction_pipline.initialization_strategy.load_config', return_value=mock_load_config):
+    with patch('my_app.model_module.prediction_pipeline.initialization_strategy.load_config', return_value=mock_load_config):
         strategy = Wav2vecInitialization()
         model = strategy.initialize('dummy_config_path')
 
@@ -121,7 +121,7 @@ def test_mesonet_initialization_missing_parameters(mock_meso_net, mock_torch_loa
         'model': {'parameters': {}}
     }
 
-    with patch('my_app.model_module.prediction_pipline.initialization_strategy.load_config', return_value=incomplete_config):
+    with patch('my_app.model_module.prediction_pipeline.initialization_strategy.load_config', return_value=incomplete_config):
         strategy = MesonetInitialization()
         model = strategy.initialize('dummy_config_path')
 
@@ -141,7 +141,7 @@ def test_wav2vec_initialization_missing_parameters(mock_wav2vec_model, mock_torc
         'model': {'parameters': {}}
     }
 
-    with patch('my_app.model_module.prediction_pipline.initialization_strategy.load_config', return_value=incomplete_config):
+    with patch('my_app.model_module.prediction_pipeline.initialization_strategy.load_config', return_value=incomplete_config):
         strategy = Wav2vecInitialization()
         model = strategy.initialize('dummy_config_path')
 
