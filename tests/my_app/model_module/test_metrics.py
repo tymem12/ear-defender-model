@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 import numpy as np
 from my_app.model_module.models.wav2vec.eval_metrics_DF import compute_eer
-from my_app.model_module.metrics import calculate_eer_from_scores, calculate_eer_from_labels
+from my_app.model_module.metrics import calculate_eer_from_scores, calculate_eer_from_labels,file_score_and_label
 
 # Mock data for compute_det_curve (frr, far, thresholds)
 mock_frr = np.array([0.1, 0.05, 0.01, 0.005])
@@ -70,3 +70,55 @@ def test_calculate_eer_from_labels():
 
     eer = calculate_eer_from_labels(model_predictions, actual_labels)
     assert eer == expected_eer, f"Expected EER to be {expected_eer}, got {eer}"
+
+
+def test_file_score_and_label_all_deepfake():
+    """Test when all segments are labeled as deepfake."""
+    model_predictions = [
+        {"segmentNumber": 1, "label": 0},
+        {"segmentNumber": 2, "label": 0},
+        {"segmentNumber": 3, "label": 0},
+    ]
+    proportion, label = file_score_and_label(model_predictions)
+    assert proportion == 1.0
+    assert label == 0
+
+def test_file_score_and_label_all_real():
+    """Test when all segments are labeled as real."""
+    model_predictions = [
+        {"segmentNumber": 1, "label": 1},
+        {"segmentNumber": 2, "label": 1},
+        {"segmentNumber": 3, "label": 1},
+    ]
+    proportion, label = file_score_and_label(model_predictions)
+    assert proportion == 0.0
+    assert label == 1
+
+def test_file_score_and_label_mixed_labels():
+    """Test with a mix of deepfake and real labels."""
+    model_predictions = [
+        {"segmentNumber": 1, "label": 0},
+        {"segmentNumber": 2, "label": 1},
+        {"segmentNumber": 3, "label": 0},
+        {"segmentNumber": 4, "label": 1},
+    ]
+    proportion, label = file_score_and_label(model_predictions)
+    assert proportion == 0.5
+    assert label == 0
+
+def test_file_score_and_label_less_than_half_deepfake():
+    """Test when less than half of the segments are deepfake."""
+    model_predictions = [
+        {"segmentNumber": 1, "label": 0},
+        {"segmentNumber": 2, "label": 1},
+        {"segmentNumber": 3, "label": 1},
+    ]
+    proportion, label = file_score_and_label(model_predictions)
+    assert proportion == pytest.approx(1/3)
+    assert label == 1
+
+def test_file_score_and_label_empty_list():
+    """Test when the input list is empty."""
+    model_predictions = []
+    with pytest.raises(ValueError, match="The model_predictions list is empty. Cannot calculate proportions."):
+        file_score_and_label(model_predictions)

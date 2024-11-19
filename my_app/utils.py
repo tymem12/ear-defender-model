@@ -1,14 +1,14 @@
-from typing import Dict, List
-import yaml
-import os
 import csv
+import os
+from typing import Dict, List, Tuple
+import yaml
 
 def load_config(yaml_path: str) -> Dict:
     with open(yaml_path, 'r') as file:
         config = yaml.safe_load(file)
         return config
 
-def get_files_to_predict(dataset: str, status: str):
+def get_files_to_predict(dataset: str, status: str) -> Tuple[List[str], str]:
     audio_storage_test = os.getenv('AUDIO_DATASETS')
     list_IDs = []  # Initialize list_IDs as empty by default
 
@@ -35,7 +35,7 @@ def get_files_to_predict(dataset: str, status: str):
 
     return list_IDs, path_to_folder
 
-def save_results_to_csv(file_names, fragments, scores, labels, output_csv):
+def save_results_to_csv(file_names: List[str], fragments: List[int], scores: List[float], labels: List[int], output_csv:str) -> None:
     file_exists = os.path.isfile(output_csv)
     with open(output_csv, mode='a', newline='') as file:
         writer = csv.writer(file)
@@ -45,7 +45,7 @@ def save_results_to_csv(file_names, fragments, scores, labels, output_csv):
         for fname, fragment, score, label in zip(file_names, fragments, scores, labels):
             writer.writerow([fname, fragment, score, label])
 
-def get_labels_and_predictions_from_csv(spoof_links: List[str], real_links: List[str]):
+def get_labels_and_predictions_from_csv(spoof_links: List[str], real_links: List[str]) -> Tuple[List[int], List[int]]:
     predictions = []
     labels = []
     for spoof_link in spoof_links:
@@ -70,7 +70,7 @@ def get_labels_and_predictions_from_csv(spoof_links: List[str], real_links: List
 
 
 
-def get_scores_and_predictions_from_csv(spoof_links: List[str], real_links: List[str]):
+def get_scores_and_predictions_from_csv(spoof_links: List[str], real_links: List[str])-> Tuple[List[float], List[int]]:
     predictions = []
     labels = []
     for spoof_link in spoof_links:
@@ -95,7 +95,7 @@ def get_scores_and_predictions_from_csv(spoof_links: List[str], real_links: List
 
 
 
-def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
+def get_scores_from_csv(spoof_links: List[str], real_links: List[str])-> Tuple[List[float], List[float]]:
     scores_spoof = []
     scores_real = []
 
@@ -121,7 +121,7 @@ def get_scores_from_csv(spoof_links: List[str], real_links: List[str]):
 
     return scores_spoof, scores_real
 
-def delate_file_from_storage(link: str, base_dir = None):
+def delate_file_from_storage(link: str, base_dir = None) -> None:
     if base_dir is None:
         base_dir = os.getenv('AUDIO_STORAGE')
     file_path = f'{base_dir}/{link}'

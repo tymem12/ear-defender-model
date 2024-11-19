@@ -5,7 +5,6 @@ from my_app.model_module.models.meso import meso_net
 from my_app.model_module.models.wav2vec.model import Model
 from my_app.utils import load_config
 
-
 # Initialization Strategy Interface
 class InitializationStrategy(ABC):
 
@@ -18,7 +17,7 @@ class InitializationStrategy(ABC):
 
 # Concrete Initialization Strategy for Mesonet Model
 class MesonetInitialization(InitializationStrategy):
-    def initialize(self, config_path):
+    def initialize(self, config_path:str) -> meso_net.FrontendMesoInception4:
         self.config = load_config(config_path)
         checkpoint_path = self.config['checkpoint']['path']
         self.parameters = self.config['model']['parameters']
@@ -30,19 +29,16 @@ class MesonetInitialization(InitializationStrategy):
         )
         model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         model = model.to(self.device)
-        # print(f"Initializing Mesonet model with config: {config_path}")
         return model
 
 # Concrete Initialization Strategy for Wav2vec Model
-class Wav2vecInitialization(InitializationStrategy):
-    def initialize(self, config_path):
+class Wav2vecInitialization(InitializationStrategy): 
+    def initialize(self, config_path:str) -> Model:
         self.config = load_config(config_path)
         self.parameters = self.config['model']['parameters']
         checkpoint_path = self.config['checkpoint']['path']
         model = Model(args=self.parameters, device=self.device)
         model = nn.DataParallel(model).to(self.device)
         model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
-        # model.to(self.device)
-        # print(f"Initializing Wav2vec model with config: {config_path}")
         return model
 

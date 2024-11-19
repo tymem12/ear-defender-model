@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 import torch
-from my_app.model_module.prediction_pipline.postprocessing_strategy import Wav2vecPostprocessing, MesoPostprocessing
+from my_app.model_module.prediction_pipeline.postprocessing_strategy import Wav2vecPostprocessing, MesoPostprocessing
 
 # Test Data
 @pytest.fixture

@@ -13,8 +13,8 @@ def test_store_token():
 
 
 # 2. Test `evaluate_parameters_model_run`
-@patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.create_model", return_value=MagicMock())
-@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
+@patch("my_app.model_module.prediction_pipeline.model_factory.ModelFactory.create_model", return_value=MagicMock())
+@patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
 @patch("os.path.isfile", return_value=True)  # Simulate that all files exist
 @patch("os.getenv", return_value="/fake_storage_path")
 def test_evaluate_parameters_model_run_valid(mock_getenv, mock_isfile, mock_pipeline_init, mock_create_model):
@@ -25,13 +25,13 @@ def test_evaluate_parameters_model_run_valid(mock_getenv, mock_isfile, mock_pipe
     # Assertions
     assert status is True, f"Expected True but got {status}"
     assert message == "2 passed to analysis", f"Expected '2 passed to analysis' but got '{message}'"
-@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline", side_effect=ValueError("Unknown model"))
+@patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline", side_effect=ValueError("Unknown model"))
 def test_evaluate_parameters_model_run_invalid_model(mock_prediction_pipeline):
     status, message = evaluate_parameters_model_run("invalid_model", ["audio1.wav"])
     assert status is False
     assert "Unknown model: invalid_model" in message
 
-@patch("my_app.model_module.prediction_pipline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
+@patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
 @patch("os.path.isfile", return_value=False)  # Files do not exist in storage
 @patch("os.getenv", return_value="/fake_storage_path")
 def test_evaluate_parameters_model_run_missing_files(mock_getenv, mock_isfile, mock_pipeline_init):
@@ -41,7 +41,7 @@ def test_evaluate_parameters_model_run_missing_files(mock_getenv, mock_isfile, m
 
 
 # 3. Test `get_models`
-@patch("my_app.model_module.prediction_pipline.model_factory.ModelFactory.get_available_models")
+@patch("my_app.model_module.prediction_pipeline.model_factory.ModelFactory.get_available_models")
 def test_get_models(mock_get_available_models):
     mock_get_available_models.return_value = ["model1", "model2"]
     models = get_models()
@@ -111,6 +111,7 @@ def test_eval_metrics_file_not_found(mock_getenv, mock_get_labels_and_prediction
 
 @patch("my_app.app_module.controller.PredictionPipeline.__init__", return_value=None)
 @patch("my_app.app_module.controller.predict")
+@patch("my_app.app_module.controller.metrics.file_score_and_label")
 @patch("my_app.app_module.controller.client_API.connector_create_predictions", return_value=(200, "Success"))
 @patch("my_app.app_module.controller.client_API.connector_end_analysis", return_value=(200, "Success"))
 @patch("my_app.app_module.controller.client_API.connector_abort_analysis")
@@ -120,6 +121,7 @@ def test_predict_audios_success(
     mock_abort_analysis,
     mock_end_analysis,
     mock_create_predictions,
+    mock_file_score_and_label,
     mock_predict,
     mock_pipeline_init,
 ):
@@ -130,7 +132,10 @@ def test_predict_audios_success(
     TOKENS[analysis_id] = "test_token"
 
     # Mock predict function output
-    mock_predict.return_value = (["audio1.wav"], [0, 1], ["label1", "label2"])
+    mock_predict.return_value = (["audio1.wav"], [0, 1], [1, 0])  # segments_list and labels
+
+    # Mock file_score_and_label function output
+    mock_file_score_and_label.return_value = (0.5, 0)  # score and label
 
     # Mock timestamp to ensure consistency
     mock_timestamp = "2024-11-18T17:44:00.590503"
@@ -150,9 +155,11 @@ def test_predict_audios_success(
             "timestamp": mock_timestamp,
             "model": selected_model,
             "modelPredictions": [
-                {"segmentNumber": 0, "label": "label1"},
-                {"segmentNumber": 1, "label": "label2"},
+                {"segmentNumber": 0, "label": 1},
+                {"segmentNumber": 1, "label": 0},
             ],
+            "score": 0.5,
+            "label": 0,
         },
         token="test_token",
     )
