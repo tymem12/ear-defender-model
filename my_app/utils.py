@@ -15,7 +15,7 @@ def get_files_to_predict(dataset: str, status: str) -> Tuple[List[str], str]:
     if dataset == 'release_in_the_wild':
         path_to_csv = f'{audio_storage_test}/{dataset}/meta.csv'
         if not os.path.isfile(path_to_csv):
-            raise FileExistsError(f'path {path_to_csv} does not exists')
+            return [], ''
         status_file = 'spoof' if status == 'fake' else 'bona-fide'
         with open(path_to_csv, mode='r') as file:
             reader = csv.reader(file)
@@ -26,7 +26,7 @@ def get_files_to_predict(dataset: str, status: str) -> Tuple[List[str], str]:
     else:
         path_to_csv = f'{audio_storage_test}/{dataset}/{dataset}_data_{status}.csv'
         if not os.path.isfile(path_to_csv):
-            raise FileExistsError(f'path {path_to_csv} does not exists')
+            return [], ''
         with open(path_to_csv, mode='r') as file:
             reader = csv.reader(file)
             next(reader, None)  # Skip header
@@ -101,23 +101,23 @@ def get_scores_from_csv(spoof_links: List[str], real_links: List[str])-> Tuple[L
 
     # Process spoof links
     for spoof_link in spoof_links:
-        if not os.path.isfile(spoof_link):
-            raise FileNotFoundError(f"Spoof link file not found: {spoof_link}")
-        with open(spoof_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                scores_spoof.append(float(row[2]))
+        if os.path.isfile(spoof_link):
+            # raise FileNotFoundError(f"Spoof link file not found: {spoof_link}")
+            with open(spoof_link, mode='r') as file:
+                reader = csv.reader(file)
+                next(reader)
+                for row in reader:
+                    scores_spoof.append(float(row[2]))
 
     # Process real links
     for real_link in real_links:
-        if not os.path.isfile(real_link):
-            raise FileNotFoundError(f"Real link file not found: {real_link}")
-        with open(real_link, mode='r') as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                scores_real.append(float(row[2]))
+        if os.path.isfile(real_link):
+            # raise FileNotFoundError(f"Real link file not found: {real_link}")
+            with open(real_link, mode='r') as file:
+                reader = csv.reader(file)
+                next(reader)
+                for row in reader:
+                    scores_real.append(float(row[2]))
 
     return scores_spoof, scores_real
 
@@ -126,3 +126,13 @@ def delate_file_from_storage(link: str, base_dir = None) -> None:
         base_dir = os.getenv('AUDIO_STORAGE')
     file_path = f'{base_dir}/{link}'
     os.remove(file_path)
+
+def save_durations(files: List[str], durations: List[float], csv_name: str):
+    file_exists = os.path.isfile(csv_name)
+    with open(csv_name, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(['fname', 'duration'])
+        
+        for fname, duration in zip(files, durations):
+            writer.writerow([fname, duration])
