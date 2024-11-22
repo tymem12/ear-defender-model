@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+import time
 from typing import List
 from my_app.model_module.evaluate_audios import predict
 from my_app.model_module.prediction_pipeline.model_factory import PredictionPipeline, ModelFactory
@@ -24,7 +25,9 @@ def evaluate_parameters_model_run(selected_model: str, file_paths : List[str]):
     storage_path = os.getenv('AUDIO_STORAGE')
     for file in file_paths:
         if not os.path.isfile(f'{storage_path}/{file}'):
-            return False, f'File does not exists in storage'
+            logging.warning(f"File not in storage. File received: {file}")
+            file_paths.remove(file)
+            # return False, f'File does not exists in storage'
         
     return True, f'{len(file_paths)} passed to analysis'    
     
@@ -97,10 +100,11 @@ def storage_content(file_paths: List[str]):
     return results
 
 
-def eval_params_eval_dataset(dataset:str, model_conf: str, output_csv = str):
+def eval_params_eval_dataset(dataset:str, model_conf: str):
     config_path = os.getenv('CONFIG_FOLDER') + '/' + model_conf
-    available_datasets = ['deep_voice', 'fake_audio', 'my_eng', 'my_pol', 'release_in_the_wild', 'test_dataset', 'example']
-    available_configs = ['config_mesonet.yaml', 'config_mesonet_finetuned.yaml', 'config_mesonet_ft_asp.yaml','config_wav2vec.yaml']
+    available_datasets = os.getenv('AVAILABLE_DATASETS', '').split(',')
+    available_configs = os.getenv('AVAILABLE_CONFIGS', '').split(',')
+
 
     if dataset not in available_datasets:
          return False, f'Not correct dataset_name. You passed {dataset} but available_datasets are: {available_datasets}' 
@@ -113,46 +117,58 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
 
 
     model_name = utils.load_config(config_path)['model']['name']
-    try:
-        files_fake, folder_path_fake = utils.get_files_to_predict(dataset = dataset, status = 'fake')
-        files_real, folder_path_real = utils.get_files_to_predict(dataset = dataset, status = 'real')
-    except FileExistsError as e:
-        return {
-            "status": "failure",
-            "info": str(e),
-        }
+    # try:
+    files_fake, folder_path_fake = utils.get_files_to_predict(dataset = dataset, status = 'fake')
+    files_real, folder_path_real = utils.get_files_to_predict(dataset = dataset, status = 'real')
+    # except FileExistsError as e:
+    #     return {
+    #         "status": "failure",
+    #         "info": str(e),
+    #     }
     # try:
     prediction_pipeline = PredictionPipeline(model_name, config_path = config_path,return_labels = True, return_scores = True)
     results_folder = os.getenv('RESULTS_CSV')
+    duration_list = []
 
-    results_csv_path_fake = f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'
-    for file in files_fake:
-        files, fragments, results = predict(prediction_pipeline, file_paths=[file], base_dir= folder_path_fake)
-        utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_fake)
-        logging.info(file + " saved")
+    if files_fake:
+        results_csv_path_fake = f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'
+        for file in files_fake:
+            start_time = time.time()  # Record the start time
+            files, fragments, results = predict(prediction_pipeline, file_paths=[file], base_dir=folder_path_fake)
+            end_time = time.time()  # Record the end time
+            duration = end_time - start_time  # Calculate execution duration
+            utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_fake)
+            duration_list.append(duration)
+            logging.info(file + " saved")
 
-    results_csv_path_real = f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'
-    for file in files_real:
-        files, fragments, results = predict(prediction_pipeline, file_paths=[file], base_dir= folder_path_real)
-        utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
-        logging.info(file + " saved")
+    if files_real:
+        results_csv_path_real = f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'
+        for file in files_real:
+            start_time = time.time()  # Record the start time
+            files, fragments, results = predict(prediction_pipeline, file_paths=[file], base_dir=folder_path_real)
+            end_time = time.time()  # Record the end time
+            duration = end_time - start_time  # Calculate execution duration
+            utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
+            duration_list.append(duration)
+            logging.info(file + " saved")
 
+    utils.save_durations(files_fake.extend(files_real), duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
     logging.info(f"files saved in {results_csv_path_fake} and {results_csv_path_real}")
-    return {
-            "status": "success",
-            "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"
-        }
+    # return {
+    #         "status": "success",
+    #         "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"
+    #     }
 
 
 def eval_metrics(dataset:str, output_csv:str):
     results_folder = os.getenv('RESULTS_CSV')
-    try:
-        scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
-    except FileNotFoundError as e:
-        return{
-        "status": "failure",
-        "info": str(e),
-        }
+    # try:
+    scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
+    # except FileNotFoundError as e:
+    #     return{
+    #     "status": "failure",
+    #     "info": str(e),
+    #     }
     eer , _= metrics.calculate_eer_from_scores(scores_spoof, scores_real)
     if eer:
         return {
