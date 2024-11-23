@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from my_app.app_module import controller
@@ -9,7 +9,7 @@ app = FastAPI()
 class AnalysisRequest(BaseModel):
     analysisId: str
     model: str
-    filePaths: List[str]
+    files: List[Dict[str, str]]
 
 
 class StorageContent(BaseModel):
@@ -29,7 +29,11 @@ class TestContentMetrics(BaseModel):
 async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTasks, authorization: str = Header(...)):
     analysis_id = request.analysisId
     selected_model = request.model
-    file_paths = request.filePaths
+    files = request.files
+
+    file_paths = [file['filePath'] for file in files]
+    file_link = [file['link'] for file in files]
+
 
     # Validate the model parameters
     status, info = controller.evaluate_parameters_model_run(selected_model, file_paths)
@@ -50,7 +54,7 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
     }
 
     # Start the background task to run the analysis
-    background_tasks.add_task(controller.predict_audios, analysis_id, selected_model, file_paths)
+    background_tasks.add_task(controller.predict_audios, analysis_id, selected_model, files)
 
     return response
 

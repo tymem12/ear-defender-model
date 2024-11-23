@@ -144,7 +144,13 @@ def test_predict_audios_success(
     # Set up the mock data
     analysis_id = "12345"
     selected_model = "test_model"
-    file_paths = ["audio1.wav", "audio2.wav"]
+    file_paths =  [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
     TOKENS[analysis_id] = "test_token"
 
     # Mock predict function output
@@ -167,7 +173,7 @@ def test_predict_audios_success(
     mock_create_predictions.assert_any_call(
         analysis_id="12345",
         payload={
-            "link": "audio1.wav",
+            "link": "link.com",
             "timestamp": mock_timestamp,
             "model": selected_model,
             "modelPredictions": [
@@ -176,10 +182,11 @@ def test_predict_audios_success(
             ],
             "score": 0.5,
             "label": 0,
+            'filePath': "file.jpg"
         },
         token="test_token",
     )
-    mock_delete_file.assert_any_call("audio1.wav")
+    mock_delete_file.assert_any_call("file.jpg")
     mock_end_analysis.assert_called_once_with(analysis_id=analysis_id, token="test_token")
     mock_abort_analysis.assert_not_called()  # Ensure no abort if successful
 
@@ -198,7 +205,13 @@ def test_predict_audios_with_error_in_predictions(
     # Set up the mock data
     analysis_id = "12345"
     selected_model = "test_model"
-    file_paths = ["audio1.wav"]
+    file_paths =  [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
     TOKENS[analysis_id] = "test_token"
 
     # Mock predict function output
@@ -210,4 +223,4 @@ def test_predict_audios_with_error_in_predictions(
     # Assertions to verify behavior
     mock_create_predictions.assert_called_once()
     mock_abort_analysis.assert_called_once_with(analysis_id, "test_token")
-    mock_delete_file.assert_called_once_with("audio1.wav")
+    mock_delete_file.assert_called_once_with("file.jpg")

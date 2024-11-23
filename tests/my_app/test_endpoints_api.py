@@ -3,6 +3,7 @@ from uuid import uuid4
 from my_app.app_module import controller
 from my_app.endpoints_api import app
 from dotenv import load_dotenv
+import pytest
 
 client = TestClient(app)
 
@@ -10,13 +11,19 @@ def test_analyze_files_model_endpoint_mesonet():
     # Prepare test data
     test_analysis_id = uuid4()
     test_model = "mesonet"
-    test_file_paths = ["path/to/file1.wav", "path/to/file2.wav"]
+    test_file_paths = [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
 
     # Expected data
     request_data = {
         "analysisId": str(test_analysis_id),
         "model": test_model,
-        "filePaths": test_file_paths,
+        "files": test_file_paths,
     }
     load_dotenv()
 
@@ -44,13 +51,19 @@ def test_analyze_files_model_endpoint_wav_to_vec():
     # Prepare test data
     test_analysis_id = uuid4()
     test_model = "wav2vec"
-    test_file_paths = ["path/to/file1.wav", "path/to/file2.wav"]
+    test_file_paths = [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
 
     # Expected data
     request_data = {
         "analysisId": str(test_analysis_id),
         "model": test_model,
-        "filePaths": test_file_paths,
+        "files": test_file_paths,
     }
     load_dotenv()
 
@@ -72,3 +85,5 @@ def test_analyze_files_model_endpoint_wav_to_vec():
     assert response_json["info"].startswith("Request for analysis")
     assert response_json["analysis_id"] == str(test_analysis_id)
     assert response_json["files"] == len(test_file_paths)
+
+
