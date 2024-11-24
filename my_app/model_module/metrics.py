@@ -63,5 +63,18 @@ def file_score_and_label(model_predictions: List[Dict[str, int]]) -> Tuple[float
     return proportion_deepfake, file_label
 
 
+from typing import List
 
+def calculate_acc_from_labels(model_predictions: List[int], actual_labels: List[int]) -> float:
+    # Check if both lists have the same length
+    if len(model_predictions) != len(actual_labels):
+        return None
+
+    # Calculate the number of correct predictions
+    correct_predictions = sum(p == a for p, a in zip(model_predictions, actual_labels))
+
+    # Calculate accuracy
+    accuracy = correct_predictions / len(actual_labels)
+
+    return accuracy
 
