@@ -167,22 +167,44 @@ def eval_metrics(dataset:str, output_csv:str):
     results_folder = os.getenv('RESULTS_CSV')
     # try:
     scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
+    predictions, labels = utils.get_labels_and_predictions_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
     # except FileNotFoundError as e:
     #     return{
     #     "status": "failure",
     #     "info": str(e),
     #     }
+    acc = metrics.calculate_acc_from_labels(predictions, labels)
     eer , _= metrics.calculate_eer_from_scores(scores_spoof, scores_real)
-    if eer:
+    if eer and acc:
         return {
             "status": "success",
             "info": 'err calculated',
-            "results" : eer 
+            "eer" : eer, 
+            "acc" : acc
         }
+    elif not acc and eer:
+        return {
+            "status": "success",
+            "info": 'Cannot calculate accuracy',
+            "eer" : eer, 
+            "acc" : 'N/A'
+        }
+    
+    elif acc and not eer:
+        return {
+            "status": "success",
+            "info": 'Cannot calculate eer',
+            "eer" : 'N/A', 
+            "acc" : acc
+        }
+
     else:
         return {
             "status": "failure",
-            "info": _,
+            "info": 'Cannot calculate eer',
+            "eer" : 'N/A' ,
+            "acc" : 'N/A'
+
         }
 
 
