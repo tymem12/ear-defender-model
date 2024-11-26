@@ -151,9 +151,9 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
             utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
             duration_list.append(duration)
             logging.info(file + " saved")
-
-    utils.save_durations(files_fake.extend(files_real), duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
-    logging.info(f"files saved in {results_csv_path_fake} and {results_csv_path_real}")
+    combined_files = files_fake + files_real
+    utils.save_durations(combined_files, duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
+    logging.info(f"files saved")
     # return {
     #         "status": "success",
     #         "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"

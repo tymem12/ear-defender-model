@@ -27,7 +27,6 @@ def predict(prediction_pipeline:PredictionPipeline , file_paths : List[str], bas
             
             batch_x = batch_x.to(device)
             batch_out = prediction_pipeline.predict(batch_x)
-            logging.info(f'Batch {i} predicted')
             i +=1
             idx_list = [t.item() for t in idx]          
 
