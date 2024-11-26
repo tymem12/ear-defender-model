@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import os
 import time
-from typing import List
+from typing import List, Dict
 from my_app.model_module.evaluate_audios import predict
 from my_app.model_module.prediction_pipeline.model_factory import PredictionPipeline, ModelFactory
 from my_app.app_module import client_API
@@ -15,7 +15,8 @@ def store_token(analysis_id, token):
     token_elem = token.split()
     TOKENS[analysis_id] = token_elem[-1]
 
-def evaluate_parameters_model_run(selected_model: str, file_paths : List[str]):
+def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str]]):
+    logging.info(files)
     try:
         PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     except ValueError as e:
@@ -23,27 +24,34 @@ def evaluate_parameters_model_run(selected_model: str, file_paths : List[str]):
         return False, f'Unknown model: {selected_model}'
     
     storage_path = os.getenv('AUDIO_STORAGE')
-    for file in file_paths:
-        if not os.path.isfile(f'{storage_path}/{file}'):
-            logging.warning(f"File not in storage. File received: {file}")
-            file_paths.remove(file)
-            # return False, f'File does not exists in storage'
-        
-    return True, f'{len(file_paths)} passed to analysis'    
+
+    # Identify invalid files and remove them directly from the `files` list
+    invalid_files = [file for file in files if not os.path.isfile(f"{storage_path}/{file['filePath']}")]
+
+    for file in invalid_files:
+        files.remove(file)
+        logging.warning(f"File not in storage. File removed: {file}")
+
+    if not files:
+        return False, "No valid files found in storage"
+
+    return True, f'{len(files)} files passed to analysis'
     
 def get_models():
     return ModelFactory.get_available_models()
 
-def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]):
+def predict_audios(analysis_id : str, selected_model: str, files: List[Dict[str, str]]):
     logging.info(f'analysis {analysis_id} started')
+    file_paths = [file['filePath'] for file in files]
+    file_links = [file['link'] for file in files]
 
     can_access_connector = True
     predictions = []
     token = TOKENS[analysis_id]
     prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     
-    for link in file_paths:
-        files ,segments_list, labels = predict(prediction_pipeline, [link])
+    for file_path, file_link in zip(file_paths, file_links):
+        files ,segments_list, labels = predict(prediction_pipeline, [file_path])
 
         if len(segments_list) != len(labels):
             logging.info("Segments and labels lists must have the same length.")
@@ -52,24 +60,25 @@ def predict_audios(analysis_id : str, selected_model: str, file_paths: List[str]
         model_score, model_label = metrics.file_score_and_label(model_predictions)
 
         payload = {
-            "link": link,
+            "link": file_link,
             "timestamp": datetime.now().isoformat(),
             "model": selected_model,
             "modelPredictions": model_predictions,
             'score' : model_score,
-            'label' : model_label
+            'label' : model_label,
+            'filePath' : file_path
             
         }
         response_code, info = client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)
-        utils.delate_file_from_storage(link)
+        utils.delate_file_from_storage(file_path)
         if response_code != 200:
-            logging.info(f": {link} predictions not send to the connector: {info}" )
+            logging.info(f": {file_path} predictions not send to the connector: {info}" )
             client_API.connector_abort_analysis(analysis_id, token)
             can_access_connector = False
             break
         else:
             predictions.append(payload)
-            logging.info(f"analysis {analysis_id} updated with new prediction for file: {link} " )
+            logging.info(f"analysis {analysis_id} updated with new prediction for file: {file_path} " )
 
     if can_access_connector:
         response_code, info = client_API.connector_end_analysis(analysis_id=analysis_id,  token =token )
@@ -151,9 +160,9 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
             utils.save_results_to_csv(files, fragments, results[0], results[1], results_csv_path_real)
             duration_list.append(duration)
             logging.info(file + " saved")
-
-    utils.save_durations(files_fake.extend(files_real), duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
-    logging.info(f"files saved in {results_csv_path_fake} and {results_csv_path_real}")
+    combined_files = files_fake + files_real
+    utils.save_durations(combined_files, duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
+    logging.info(f"files saved")
     # return {
     #         "status": "success",
     #         "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"
@@ -164,22 +173,44 @@ def eval_metrics(dataset:str, output_csv:str):
     results_folder = os.getenv('RESULTS_CSV')
     # try:
     scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
+    predictions, labels = utils.get_labels_and_predictions_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
     # except FileNotFoundError as e:
     #     return{
     #     "status": "failure",
     #     "info": str(e),
     #     }
+    acc = metrics.calculate_acc_from_labels(predictions, labels)
     eer , _= metrics.calculate_eer_from_scores(scores_spoof, scores_real)
-    if eer:
+    if eer and acc:
         return {
             "status": "success",
             "info": 'err calculated',
-            "results" : eer 
+            "eer" : eer, 
+            "acc" : acc
         }
+    elif not acc and eer:
+        return {
+            "status": "success",
+            "info": 'Cannot calculate accuracy',
+            "eer" : eer, 
+            "acc" : 'N/A'
+        }
+    
+    elif acc and not eer:
+        return {
+            "status": "success",
+            "info": 'Cannot calculate eer',
+            "eer" : 'N/A', 
+            "acc" : acc
+        }
+
     else:
         return {
             "status": "failure",
-            "info": _,
+            "info": 'Cannot calculate eer',
+            "eer" : 'N/A' ,
+            "acc" : 'N/A'
+
         }
 
 

@@ -27,7 +27,6 @@ def predict(prediction_pipeline:PredictionPipeline , file_paths : List[str], bas
             
             batch_x = batch_x.to(device)
             batch_out = prediction_pipeline.predict(batch_x)
-            logging.info(f'Batch {i} predicted')
             i +=1
             idx_list = [t.item() for t in idx]          
 
@@ -35,6 +34,7 @@ def predict(prediction_pipeline:PredictionPipeline , file_paths : List[str], bas
             fname_list.extend(file_name)
             fragment_list.extend(idx_list)
             model_output_list.extend(batch_out)
+            logging.info(f'batch callulated: {i}')
         dataset.clean_dataset()
     return fname_list, fragment_list,model_output_list
 

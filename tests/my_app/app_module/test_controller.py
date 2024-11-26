@@ -106,21 +106,53 @@ def test_eval_params_eval_dataset_invalid_config(mock_getenv):
 
 
 # 6. Test `eval_metrics`
-@patch("my_app.utils.get_scores_from_csv")
+@patch("my_app.utils.get_scores_from_csv", return_value=([0.3, 0.6], [0.8, 0.4]))
+@patch("my_app.utils.get_labels_and_predictions_from_csv", return_value=([1, 0, 1], [1, 0, 1]))
 @patch("my_app.model_module.metrics.calculate_eer_from_scores", return_value=(0.05, []))
-@patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
-def test_eval_metrics_success(mock_getenv, mock_calculate_eer, mock_get_labels_and_predictions_from_csv):
-    mock_get_labels_and_predictions_from_csv.return_value = ([1, 0, 1], [0, 0, 1])
+@patch("my_app.model_module.metrics.calculate_acc_from_labels", return_value=0.9)
+@patch("os.getenv", return_value="/fake_results_path")
+def test_eval_metrics_both_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "success"
     assert result["info"] == "err calculated"
-    assert result["results"] == 0.05
+    assert result["eer"] == 0.05
+    assert result["acc"] == 0.9
 
-@patch("my_app.utils.get_scores_from_csv", return_value=([0.3], [0.8]))
-@patch("os.getenv", return_value="/fake_results_path")  # Add mock_getenv here
-def test_eval_metrics_file_not_found(mock_getenv, mock_get_labels_and_predictions_from_csv):
+@patch("my_app.utils.get_scores_from_csv", return_value=([], []))  # Empty scores
+@patch("my_app.utils.get_labels_and_predictions_from_csv", return_value=([1, 0, 1], [1, 0, 1]))
+@patch("my_app.model_module.metrics.calculate_eer_from_scores", return_value=(None, []))
+@patch("my_app.model_module.metrics.calculate_acc_from_labels", return_value=0.85)
+@patch("os.getenv", return_value="/fake_results_path")
+def test_eval_metrics_only_acc_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
+    result = eval_metrics("test_dataset", "output")
+    assert result["status"] == "success"
+    assert result["info"] == "Cannot calculate eer"
+    assert result["eer"] == "N/A"
+    assert result["acc"] == 0.85
+
+@patch("my_app.utils.get_scores_from_csv", return_value=([0.3, 0.6], [0.8, 0.4]))
+@patch("my_app.utils.get_labels_and_predictions_from_csv", return_value=([], []))  # Empty predictions and labels
+@patch("my_app.model_module.metrics.calculate_eer_from_scores", return_value=(0.07, []))
+@patch("my_app.model_module.metrics.calculate_acc_from_labels", return_value=None)
+@patch("os.getenv", return_value="/fake_results_path")
+def test_eval_metrics_only_eer_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
+    result = eval_metrics("test_dataset", "output")
+    assert result["status"] == "success"
+    assert result["info"] == "Cannot calculate accuracy"
+    assert result["eer"] == 0.07
+    assert result["acc"] == "N/A"
+
+@patch("my_app.utils.get_scores_from_csv", return_value=([], []))  # Empty scores
+@patch("my_app.utils.get_labels_and_predictions_from_csv", return_value=([], []))  # Empty predictions and labels
+@patch("my_app.model_module.metrics.calculate_eer_from_scores", return_value=(None, []))
+@patch("my_app.model_module.metrics.calculate_acc_from_labels", return_value=None)
+@patch("os.getenv", return_value="/fake_results_path")
+def test_eval_metrics_both_incorrect(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "failure"
+    assert result["info"] == "Cannot calculate eer"
+    assert result["eer"] == "N/A"
+    assert result["acc"] == "N/A"
 
 
 
@@ -144,7 +176,13 @@ def test_predict_audios_success(
     # Set up the mock data
     analysis_id = "12345"
     selected_model = "test_model"
-    file_paths = ["audio1.wav", "audio2.wav"]
+    file_paths =  [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
     TOKENS[analysis_id] = "test_token"
 
     # Mock predict function output
@@ -167,7 +205,7 @@ def test_predict_audios_success(
     mock_create_predictions.assert_any_call(
         analysis_id="12345",
         payload={
-            "link": "audio1.wav",
+            "link": "link.com",
             "timestamp": mock_timestamp,
             "model": selected_model,
             "modelPredictions": [
@@ -176,10 +214,11 @@ def test_predict_audios_success(
             ],
             "score": 0.5,
             "label": 0,
+            'filePath': "file.jpg"
         },
         token="test_token",
     )
-    mock_delete_file.assert_any_call("audio1.wav")
+    mock_delete_file.assert_any_call("file.jpg")
     mock_end_analysis.assert_called_once_with(analysis_id=analysis_id, token="test_token")
     mock_abort_analysis.assert_not_called()  # Ensure no abort if successful
 
@@ -198,7 +237,13 @@ def test_predict_audios_with_error_in_predictions(
     # Set up the mock data
     analysis_id = "12345"
     selected_model = "test_model"
-    file_paths = ["audio1.wav"]
+    file_paths =  [ {
+        'filePath': "file.jpg",
+        'link': "link.com"
+        }, {
+        'filePath': "file2.jpg",
+        'link': "link2.com"
+        }]
     TOKENS[analysis_id] = "test_token"
 
     # Mock predict function output
@@ -210,4 +255,4 @@ def test_predict_audios_with_error_in_predictions(
     # Assertions to verify behavior
     mock_create_predictions.assert_called_once()
     mock_abort_analysis.assert_called_once_with(analysis_id, "test_token")
-    mock_delete_file.assert_called_once_with("audio1.wav")
+    mock_delete_file.assert_called_once_with("file.jpg")
