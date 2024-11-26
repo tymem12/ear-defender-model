@@ -37,7 +37,7 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
 
     logging.info(files)
     # Validate the model parameters
-    status, info = controller.evaluate_parameters_model_run(selected_model, files)
+    status, info = await controller.evaluate_parameters_model_run(selected_model, files)
     logging.info(files)
 
     if not status:
@@ -45,7 +45,7 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
     
 
     # Store the token associated with this analysis_id
-    controller.store_token(analysis_id, authorization)
+    await controller.store_token(analysis_id, authorization)
 
     # Immediate response to the sender
     response = {

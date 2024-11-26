@@ -8,14 +8,19 @@ from my_app.model_module.prediction_pipeline.model_factory import PredictionPipe
 from my_app.app_module import client_API
 from my_app import utils
 from my_app.model_module import metrics
+import httpx
+import asyncio
+from collections import defaultdict
+from asyncio import Lock
 
+TOKENS = defaultdict(str)
+TOKEN_LOCK = Lock()
 
-TOKENS = {}
-def store_token(analysis_id, token):
-    token_elem = token.split()
-    TOKENS[analysis_id] = token_elem[-1]
+async def store_token(analysis_id, token):
+    async with TOKEN_LOCK:
+        TOKENS[analysis_id] = token[-1]
 
-def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str]]):
+async def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str]]):
 
     try:
         PredictionPipeline(selected_model, return_labels=True, return_scores=False)
@@ -41,7 +46,7 @@ def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str
 def get_models():
     return ModelFactory.get_available_models()
 
-def predict_audios(analysis_id : str, selected_model: str, files: List[Dict[str, str]]):
+async def predict_audios(analysis_id: str, selected_model: str, files: List[Dict[str, str]]):
     logging.info(f'analysis {analysis_id} started')
     file_paths = [file['filePath'] for file in files]
     file_links = [file['link'] for file in files]
@@ -51,43 +56,56 @@ def predict_audios(analysis_id : str, selected_model: str, files: List[Dict[str,
     token = TOKENS[analysis_id]
     prediction_pipeline = PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     
-    for file_path, file_link in zip(file_paths, file_links):
-        files ,segments_list, labels = predict(prediction_pipeline, [file_path])
+    async def process_file(file_path, file_link):
+        try:
+            # Perform predictions
+            files, segments_list, labels = predict(prediction_pipeline, [file_path])
+            if len(segments_list) != len(labels):
+                raise ValueError("Segments and labels lists must have the same length.")
 
-        if len(segments_list) != len(labels):
-            logging.info("Segments and labels lists must have the same length.")
-            continue  
-        model_predictions = [{"segmentNumber": segment, "label": label} for segment, label in zip(segments_list, labels)]
-        model_score, model_label = metrics.file_score_and_label(model_predictions)
+            # Prepare the payload
+            model_predictions = [{"segmentNumber": segment, "label": label} for segment, label in zip(segments_list, labels)]
+            model_score, model_label = metrics.file_score_and_label(model_predictions)
+            payload = {
+                "link": file_link,
+                "timestamp": datetime.now().isoformat(),
+                "model": selected_model,
+                "modelPredictions": model_predictions,
+                "score": model_score,
+                "label": model_label,
+                "filePath": file_path
+            }
 
-        payload = {
-            "link": file_link,
-            "timestamp": datetime.now().isoformat(),
-            "model": selected_model,
-            "modelPredictions": model_predictions,
-            'score' : model_score,
-            'label' : model_label,
-            'filePath' : file_path
-            
-        }
-        response_code, info = client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)
-        utils.delate_file_from_storage(file_path)
-        if response_code != 200:
-            logging.info(f": {file_path} predictions not send to the connector: {info}" )
+            # Send predictions asynchronously
+            status_code, message = await client_API.connector_create_predictions(analysis_id, payload, token)
+            if status_code != 200:
+                logging.error(f"Error sending predictions for {file_path}: {message}")
+                raise RuntimeError(f"Failed to send predictions for {file_path}")
+
+            # Delete file from storage
+            utils.delate_file_from_storage(file_path)
+            return payload
+
+        except Exception as e:
+            logging.error(f"Error processing file {file_path}: {e}")
+            raise
+    tasks = [process_file(file_path, file_link) for file_path, file_link in zip(file_paths, file_links)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for result in results:
+        if isinstance(result, Exception):
+            logging.error(f"Error processing file: {result}")
             client_API.connector_abort_analysis(analysis_id, token)
             can_access_connector = False
             break
-        else:
-            predictions.append(payload)
-            logging.info(f"analysis {analysis_id} updated with new prediction for file: {file_path} " )
+    else:
+        predictions.append(result)
 
     if can_access_connector:
-        response_code, info = client_API.connector_end_analysis(analysis_id=analysis_id,  token =token )
+        response_code, info = client_API.connector_end_analysis(analysis_id=analysis_id, token=token)
         if response_code == 200:
             logging.info(f'analysis {analysis_id} finished')
         else:
             client_API.connector_abort_analysis(analysis_id, token)
-            
     else:
         logging.info(f'analysis {analysis_id} was aborted')
 
