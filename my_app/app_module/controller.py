@@ -15,7 +15,8 @@ def store_token(analysis_id, token):
     token_elem = token.split()
     TOKENS[analysis_id] = token_elem[-1]
 
-def evaluate_parameters_model_run(selected_model: str, file_paths : List[str]):
+def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str]]):
+    logging.info(files)
     try:
         PredictionPipeline(selected_model, return_labels=True, return_scores=False)
     except ValueError as e:
@@ -23,13 +24,18 @@ def evaluate_parameters_model_run(selected_model: str, file_paths : List[str]):
         return False, f'Unknown model: {selected_model}'
     
     storage_path = os.getenv('AUDIO_STORAGE')
-    for file in file_paths:
-        if not os.path.isfile(f'{storage_path}/{file}'):
-            logging.warning(f"File not in storage. File received: {file}")
-            file_paths.remove(file)
-            # return False, f'File does not exists in storage'
-        
-    return True, f'{len(file_paths)} passed to analysis'    
+
+    # Identify invalid files and remove them directly from the `files` list
+    invalid_files = [file for file in files if not os.path.isfile(f"{storage_path}/{file['filePath']}")]
+
+    for file in invalid_files:
+        files.remove(file)
+        logging.warning(f"File not in storage. File removed: {file}")
+
+    if not files:
+        return False, "No valid files found in storage"
+
+    return True, f'{len(files)} files passed to analysis'
     
 def get_models():
     return ModelFactory.get_available_models()

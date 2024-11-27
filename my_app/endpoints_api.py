@@ -2,6 +2,7 @@ from typing import List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from my_app.app_module import controller
+import logging
 
 app = FastAPI()
 
@@ -34,12 +35,13 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
     file_paths = [file['filePath'] for file in files]
     file_link = [file['link'] for file in files]
 
-
+    logging.info(files)
     # Validate the model parameters
-    status, info = controller.evaluate_parameters_model_run(selected_model, file_paths)
+    status, info = controller.evaluate_parameters_model_run(selected_model, files)
+    logging.info(files)
+
     if not status:
         raise HTTPException(status_code=400, detail=info)
-    
     
 
     # Store the token associated with this analysis_id
