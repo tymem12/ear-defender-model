@@ -69,6 +69,9 @@ def calculate_acc_from_labels(model_predictions: List[int], actual_labels: List[
     # Check if both lists have the same length
     if len(model_predictions) != len(actual_labels):
         return None
+    if not actual_labels:
+        return None
+
 
     # Calculate the number of correct predictions
     correct_predictions = sum(p == a for p, a in zip(model_predictions, actual_labels))

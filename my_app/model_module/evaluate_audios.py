@@ -34,7 +34,7 @@ def predict(prediction_pipeline:PredictionPipeline , file_paths : List[str], bas
             fname_list.extend(file_name)
             fragment_list.extend(idx_list)
             model_output_list.extend(batch_out)
-            logging.info(f'batch callulated: {i}')
+            # logging.info(f'batch calculated: {i}')
         dataset.clean_dataset()
     return fname_list, fragment_list,model_output_list
 

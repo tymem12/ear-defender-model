@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from my_app.app_module import controller
 import logging
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 app = FastAPI()
 
@@ -26,23 +28,24 @@ class TestContentMetrics(BaseModel):
     dataset: str
     csv_file_id:str
 
+# Thread pool executor setup
+executor = ThreadPoolExecutor(max_workers=1)
+executor_lock = threading.Lock()
+
+# Placeholder controller class (Replace with actual implementation)
+
+
 @app.post("/model/run")
-async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTasks, authorization: str = Header(...)):
+async def analyze_files(request: AnalysisRequest, authorization: str = Header(...)):
     analysis_id = request.analysisId
     selected_model = request.model
     files = request.files
 
-    file_paths = [file['filePath'] for file in files]
-    file_link = [file['link'] for file in files]
-
-    logging.info(files)
     # Validate the model parameters
     status, info = controller.evaluate_parameters_model_run(selected_model, files)
-    logging.info(files)
 
     if not status:
         raise HTTPException(status_code=400, detail=info)
-    
 
     # Store the token associated with this analysis_id
     controller.store_token(analysis_id, authorization)
@@ -52,11 +55,12 @@ async def analyze_files(request: AnalysisRequest, background_tasks: BackgroundTa
         "status": "accepted",
         "info": f"Request for analysis {analysis_id} accepted",
         "analysis_id": analysis_id,
-        "files": len(file_paths)
+        "files": len(files),
     }
 
-    # Start the background task to run the analysis
-    background_tasks.add_task(controller.predict_audios, analysis_id, selected_model, files)
+    # Start the task using ThreadPoolExecutor
+    with executor_lock:
+        executor.submit(controller.predict_audios, analysis_id, selected_model, files)
 
     return response
 
