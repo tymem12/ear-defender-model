@@ -13,30 +13,35 @@ def test_store_token():
 
 
 # 2. Test `evaluate_parameters_model_run`
-@patch("my_app.model_module.prediction_pipeline.model_factory.ModelFactory.create_model", return_value=MagicMock())
-@patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
+@patch('my_app.app_module.controller.get_models', return_value=['valid_model'])
 @patch("os.path.isfile", return_value=True)  # Simulate that all files exist
 @patch("os.getenv", return_value="/fake_storage_path")
-def test_evaluate_parameters_model_run_valid(mock_getenv, mock_isfile, mock_pipeline_init, mock_create_model):
-    # Call the function
-    status, message = evaluate_parameters_model_run("any_model_name", ["audio1.wav", "audio2.wav"])
-    print(f"Status: {status}, Message: {message}")
-
+def test_evaluate_parameters_model_run_valid(mock_getenv, mock_isfile, mock_valid_model):
+    # Call the function with correctly structured files
+    files = [{"filePath": "audio1.wav"}, {"filePath": "audio2.wav"}]
+    status, message = evaluate_parameters_model_run("valid_model", files)
+    
     # Assertions
     assert status is True, f"Expected True but got {status}"
-    assert message == "2 passed to analysis", f"Expected '2 passed to analysis' but got '{message}'"
+    assert message == "2 files passed to analysis", f"Expected '2 files passed to analysis' but got '{message}'"
+
 @patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline", side_effect=ValueError("Unknown model"))
 def test_evaluate_parameters_model_run_invalid_model(mock_prediction_pipeline):
     status, message = evaluate_parameters_model_run("invalid_model", ["audio1.wav"])
     assert status is False
     assert "Unknown model: invalid_model" in message
 
-@patch("my_app.model_module.prediction_pipeline.model_factory.PredictionPipeline.__init__", return_value=None)  # Mock PredictionPipeline constructor
-@patch("os.path.isfile", return_value=False)  # Files do not exist in storage
+@patch('my_app.app_module.controller.get_models', return_value=['valid_model'])
+@patch("os.path.isfile", return_value=False)  # Simulate that files do not exist
 @patch("os.getenv", return_value="/fake_storage_path")
-def test_evaluate_parameters_model_run_missing_files(mock_getenv, mock_isfile, mock_pipeline_init):
-    status, message = evaluate_parameters_model_run("valid_model", ["missing_file.wav"])
-    assert status is True
+def test_evaluate_parameters_model_run_missing_files(mock_getenv, mock_isfile, mock_valid_model):
+    # Call the function with non-existing files
+    files = [{"filePath": "missing_file.wav"}]
+    status, message = evaluate_parameters_model_run("valid_model", files)
+
+    # Assertions
+    assert status is False, f"Expected False but got {status}"
+    assert message == "No valid files found in storage", f"Expected 'No valid files found in storage' but got '{message}'"
 
 
 # 3. Test `get_models`
@@ -114,7 +119,7 @@ def test_eval_params_eval_dataset_invalid_config(mock_getenv):
 def test_eval_metrics_both_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "success"
-    assert result["info"] == "err calculated"
+    assert result["info"] == "metrics calculated for dataset test_dataset and file: output"
     assert result["eer"] == 0.05
     assert result["acc"] == 0.9
 
@@ -126,7 +131,7 @@ def test_eval_metrics_both_correct(mock_getenv, mock_acc, mock_eer, mock_labels,
 def test_eval_metrics_only_acc_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "success"
-    assert result["info"] == "Cannot calculate eer"
+    assert result["info"] == "Cannot calculate eer for dataset test_dataset and file: output"
     assert result["eer"] == "N/A"
     assert result["acc"] == 0.85
 
@@ -138,7 +143,7 @@ def test_eval_metrics_only_acc_correct(mock_getenv, mock_acc, mock_eer, mock_lab
 def test_eval_metrics_only_eer_correct(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "success"
-    assert result["info"] == "Cannot calculate accuracy"
+    assert result["info"] == "Cannot calculate acc for dataset test_dataset and file: output"
     assert result["eer"] == 0.07
     assert result["acc"] == "N/A"
 
@@ -150,7 +155,7 @@ def test_eval_metrics_only_eer_correct(mock_getenv, mock_acc, mock_eer, mock_lab
 def test_eval_metrics_both_incorrect(mock_getenv, mock_acc, mock_eer, mock_labels, mock_scores):
     result = eval_metrics("test_dataset", "output")
     assert result["status"] == "failure"
-    assert result["info"] == "Cannot calculate eer"
+    assert result["info"] == "Cannot calculate eer and acc for dataset test_dataset and file: output"
     assert result["eer"] == "N/A"
     assert result["acc"] == "N/A"
 

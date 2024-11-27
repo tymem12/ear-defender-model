@@ -43,7 +43,7 @@ def test_connector_create_predictions_http_error(mock_put, mock_getenv):
     # Set up mock to raise an HTTPError with a 403 status code
     mock_response = Mock()
     mock_response.status_code = 403
-    mock_response.raise_for_status.side_effect = requests.HTTPError("403 Client Error: Forbidden for url")
+    mock_response.raise_for_status.side_effect = requests.HTTPError("Access forbidden")
     mock_put.return_value = mock_response
     
     # Call the function
