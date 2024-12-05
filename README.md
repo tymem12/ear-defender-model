@@ -47,13 +47,26 @@ The Detector Module provides several endpoints, which are accessible via the API
 
 2. **Additional Open Endpoints**:
    - Other endpoints are accessible to users without authentication. These endpoints are designed to:
-     - Retrieve metrics and performance insights
-     - Access results based on datasets mentioned in the related research article
+     - run specified model for the dataset mentioned in the article (`model/eval_dataset`) to save the results in the `results_csv/{dataset_name}` folder. In order for this method to work `datasets` folder needs to be created containing the audio files. All audio files that needs to be inside `datasets` and the directory structure can be accessible here: https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz?usp=sharing
+     - access metrics based on datasets mentioned in the related research article (`model/eval_metrics`), from the files stored in the `results_csv/{dataset_name}`. To obtain the metrics that were in our article it is not required to download the datasets. 
+   - Inside the Postman collection inside this module are all necessary requests to test these functionalities.
    - While these endpoints are open for users, they are not utilized by the connector module.
+   - All the details of the body requests 
 
 ---
 
 ## tests:
-bash -c "source activate SSL_Spoofing && pytest tests"
-pytest --cov=your_module_or_directory tests/
+`bash -c "source activate SSL_Spoofing && pytest tests"` - Used to run the tests in the container from the console.
+`bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"`- Used to test the coverage of the tests (command include the coverage of the tests that belong to used submodule `fairseq`)
+
+
+## References:
+- submodules and implementation used from: 
+   - https://github.com/TakHemlata/SSL_Anti-spoofing
+   - https://github.com/piotrkawa/deepfake-whisper-features
+
+- datasets used for evaluation:
+   - in_the_wild: https://arxiv.org/abs/2203.16263
+   - MLAAD: https://arxiv.org/abs/2401.09512
+   - Deep_voice: https://arxiv.org/abs/2308.12734
 

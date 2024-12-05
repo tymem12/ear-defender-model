@@ -1,0 +1,669 @@
+{
+	"info": {
+		"_postman_id": "20f72f58-66af-4b6d-aebe-50842de25067",
+		"name": "article_results_requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "30870378"
+	},
+	"item": [
+		{
+			"name": "eval_metrics",
+			"item": [
+				{
+					"name": "my_eng Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "example Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "MLAAD_v3_pl Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "my_pol Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "deep_voice Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_metrics"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "eval_dataset",
+			"item": [
+				{
+					"name": "my_eng Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_eng\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "example Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"example\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "MLAAD_v3_pl Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"MLAAD_v3_pl\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "my_pol Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"my_pol\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "deep_voice Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"deep_voice\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "in_the_wild Copy",
+					"item": [
+						{
+							"name": "wav2vec_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"release_in_the_wild\",\r\n    \"csv_file_id\": \"wav2vec_v1\",\r\n    \"model_conf\": \"config_wav2vec.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_v1",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"release_in_the_wild\",\r\n    \"csv_file_id\": \"mesonet_v1\",\r\n    \"model_conf\": \"config_mesonet.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						},
+						{
+							"name": "mesonet_ft_asp",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dataset\": \"release_in_the_wild\",\r\n    \"csv_file_id\": \"mesonet_ft_asp_v1\",\r\n    \"model_conf\": \"config_mesonet_ft_asp.yaml\"\r\n\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://0.0.0.0:7000/model/eval_dataset"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
