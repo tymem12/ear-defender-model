@@ -17,10 +17,8 @@ def store_token(analysis_id, token):
 
 def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str]]):
     logging.info(files)
-    try:
-        PredictionPipeline(selected_model, return_labels=True, return_scores=False)
-    except ValueError as e:
-        logging.info(f"Error initializing PredictionPipeline: {str(e)}")
+
+    if selected_model not in get_models():
         return False, f'Unknown model: {selected_model}'
     
     storage_path = os.getenv('AUDIO_STORAGE')
@@ -33,6 +31,7 @@ def evaluate_parameters_model_run(selected_model: str, files: List[Dict[str, str
         logging.warning(f"File not in storage. File removed: {file}")
 
     if not files:
+        logging.warning(f"Every file that was passed does not exists in storage")
         return False, "No valid files found in storage"
 
     return True, f'{len(files)} files passed to analysis'
@@ -72,12 +71,12 @@ def predict_audios(analysis_id : str, selected_model: str, files: List[Dict[str,
         response_code, info = client_API.connector_create_predictions(analysis_id = analysis_id, payload= payload, token=token)
         utils.delate_file_from_storage(file_path)
         if response_code != 200:
-            logging.info(f": {file_path} predictions not send to the connector: {info}" )
+            logging.info(f": {file_path} predictions not send to the connector: {str(info)}" )
             client_API.connector_abort_analysis(analysis_id, token)
             can_access_connector = False
             break
         else:
-            predictions.append(payload)
+            # predictions.append(payload)
             logging.info(f"analysis {analysis_id} updated with new prediction for file: {file_path} " )
 
     if can_access_connector:
@@ -121,20 +120,15 @@ def eval_params_eval_dataset(dataset:str, model_conf: str):
          return False, f'Not correct config_path. You passed {model_conf} but available_datasets are: {available_configs}' 
 
     return True, f'Analysis started for dataset {dataset}. Files are generating '
+
 def eval_dataset(dataset:str, model_conf: str, output_csv : str):
     config_path = os.getenv('CONFIG_FOLDER') + '/' +model_conf
-
 
     model_name = utils.load_config(config_path)['model']['name']
     # try:
     files_fake, folder_path_fake = utils.get_files_to_predict(dataset = dataset, status = 'fake')
     files_real, folder_path_real = utils.get_files_to_predict(dataset = dataset, status = 'real')
-    # except FileExistsError as e:
-    #     return {
-    #         "status": "failure",
-    #         "info": str(e),
-    #     }
-    # try:
+
     prediction_pipeline = PredictionPipeline(model_name, config_path = config_path,return_labels = True, return_scores = True)
     results_folder = os.getenv('RESULTS_CSV')
     duration_list = []
@@ -163,35 +157,25 @@ def eval_dataset(dataset:str, model_conf: str, output_csv : str):
     combined_files = files_fake + files_real
     utils.save_durations(combined_files, duration_list, f'results_csv/{dataset}/duration_{dataset}_{output_csv}.csv')
     logging.info(f"files saved")
-    # return {
-    #         "status": "success",
-    #         "info": f"files saved in {results_csv_path_fake} and {results_csv_path_real}"
-    #     }
 
 
 def eval_metrics(dataset:str, output_csv:str):
     results_folder = os.getenv('RESULTS_CSV')
-    # try:
     scores_spoof, scores_real = utils.get_scores_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
     predictions, labels = utils.get_labels_and_predictions_from_csv([f'{results_folder}/{dataset}/{dataset}_fake_{output_csv}.csv'], [f'{results_folder}/{dataset}/{dataset}_real_{output_csv}.csv'])
-    # except FileNotFoundError as e:
-    #     return{
-    #     "status": "failure",
-    #     "info": str(e),
-    #     }
     acc = metrics.calculate_acc_from_labels(predictions, labels)
     eer , _= metrics.calculate_eer_from_scores(scores_spoof, scores_real)
     if eer and acc:
         return {
             "status": "success",
-            "info": 'err calculated',
+            "info": f'metrics calculated for dataset {dataset} and file: {output_csv}',
             "eer" : eer, 
             "acc" : acc
         }
     elif not acc and eer:
         return {
             "status": "success",
-            "info": 'Cannot calculate accuracy',
+            "info": f'Cannot calculate acc for dataset {dataset} and file: {output_csv}',
             "eer" : eer, 
             "acc" : 'N/A'
         }
@@ -199,7 +183,7 @@ def eval_metrics(dataset:str, output_csv:str):
     elif acc and not eer:
         return {
             "status": "success",
-            "info": 'Cannot calculate eer',
+            "info": f'Cannot calculate eer for dataset {dataset} and file: {output_csv}',
             "eer" : 'N/A', 
             "acc" : acc
         }
@@ -207,17 +191,8 @@ def eval_metrics(dataset:str, output_csv:str):
     else:
         return {
             "status": "failure",
-            "info": 'Cannot calculate eer',
+            "info": f'Cannot calculate eer and acc for dataset {dataset} and file: {output_csv}',
             "eer" : 'N/A' ,
             "acc" : 'N/A'
 
         }
-
-
-
-
-
-
-
-
-
