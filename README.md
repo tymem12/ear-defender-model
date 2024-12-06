@@ -1,6 +1,6 @@
 # Ear Defender - Detector Module
 
-This repository contains the **Detector Module** for the **Ear Defender** project, designed to analyze audio datasets and return metrics and results. This README provides setup instructions and an overview of the key endpoints for the Detector Module, which operates as a separate Docker-based service within the larger Ear Defender application ecosystem.
+This repository contains the **Detector Module** for the [**Ear Defender**](https://github.com/tymem12/ear-defender) project, designed to analyze audio datasets and return metrics and results. This README provides setup instructions and an overview of the key endpoints for the Detector Module, which operates as a separate Docker-based service within the larger Ear Defender application ecosystem.
 
 ---
 
@@ -47,26 +47,26 @@ The Detector Module provides several endpoints, which are accessible via the API
 
 2. **Additional Open Endpoints**:
    - Other endpoints are accessible to users without authentication. These endpoints are designed to:
-     - run specified model for the dataset mentioned in the article (`model/eval_dataset`) to save the results in the `results_csv/{dataset_name}` folder. In order for this method to work `datasets` folder needs to be created containing the audio files. All audio files that needs to be inside `datasets` and the directory structure can be accessible here: https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz?usp=sharing
-     - access metrics based on datasets mentioned in the related research article (`model/eval_metrics`), from the files stored in the `results_csv/{dataset_name}`. To obtain the metrics that were in our article it is not required to download the datasets. 
-   - Inside the Postman collection inside this module are all necessary requests to test these functionalities.
-   - While these endpoints are open for users, they are not utilized by the connector module.
-   - All the details of the body requests 
+     - Run a specified model for the dataset mentioned in the article (`model/eval_dataset`) and save the results in the `results_csv/{dataset_name}` folder. For this method to work, the `datasets` folder must be created, containing the necessary audio files. All audio files need to be placed inside `datasets`, and the directory structure can be found here: [Google Drive Folder](https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz?usp=sharing).
+      - Access metrics based on datasets mentioned in the related research article (`model/eval_metrics`), from the files stored in the `results_csv/{dataset_name}`. To obtain the metrics referenced in the article, it is not necessary to download the datasets.
+   - The Postman collections contain examples of requests (including their body) that can be used to run predictions on given dataset with the models or calculate metrics from the predictions.
+   - While these endpoints are open to users, they are not utilized by the connector module.
 
 ---
 
-## tests:
-`bash -c "source activate SSL_Spoofing && pytest tests"` - Used to run the tests in the container from the console.
-`bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"`- Used to test the coverage of the tests (command include the coverage of the tests that belong to used submodule `fairseq`)
+## Tests:
+- `bash -c "source activate SSL_Spoofing && pytest tests"` - Used to run the tests in the container from the console.
+- `bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"` - Used to test the coverage of the tests (this command includes coverage for the tests belonging to the used submodule `fairseq`).
 
+---
 
 ## References:
-- submodules and implementation used from: 
-   - https://github.com/TakHemlata/SSL_Anti-spoofing
-   - https://github.com/piotrkawa/deepfake-whisper-features
+- Submodules and implementations used from:
+   - [SSL_Anti-spoofing](https://github.com/TakHemlata/SSL_Anti-spoofing)
+   - [deepfake-whisper-features](https://github.com/piotrkawa/deepfake-whisper-features)
 
-- datasets used for evaluation:
-   - in_the_wild: https://arxiv.org/abs/2203.16263
-   - MLAAD: https://arxiv.org/abs/2401.09512
-   - Deep_voice: https://arxiv.org/abs/2308.12734
+- Datasets used for evaluation:
+   - [In_the_wild](https://arxiv.org/abs/2203.16263)
+   - [MLAAD](https://arxiv.org/abs/2401.09512)
+   - [Deep_voice](https://arxiv.org/abs/2308.12734)
 
