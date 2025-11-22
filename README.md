@@ -92,11 +92,11 @@ These metrics correspond to those referenced in the research article
 
 ## 🧪 Tests
 
-Run all tests inside the container:
+**Run all tests inside the container:**
 
 `bash -c "source activate SSL_Spoofing && pytest tests"`
 
-Run tests with coverage:
+**Run tests with coverage:**
 
 `bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"`
 
