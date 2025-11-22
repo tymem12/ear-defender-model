@@ -1,72 +1,121 @@
-# Ear Defender - Detector Module
+# 🧠 EarDefender – Detector Module
 
-This repository contains the **Detector Module** for the [**Ear Defender**](https://github.com/tymem12/ear-defender) project, designed to analyze audio datasets and return metrics and results. This README provides setup instructions and an overview of the key endpoints for the Detector Module, which operates as a separate Docker-based service within the larger Ear Defender application ecosystem.
+**DeepFake Audio Detection Engine**
 
----
+## 🚀 Overview
 
-## Setup Instructions
+The **Detector** Module is responsible for running DeepFake audio analysis within the EarDefender system.
+It evaluates audio samples, processes datasets, computes metrics, and exposes REST endpoints for real-time detection.
 
-To set up and launch the Detector Module, follow these steps:
+This service operates as an independent Docker container and integrates with the Connector Module through a secure API.
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/tymem12/ear-defender-model.git
-   ```
-   
-2. **Initialize and Update Submodules**:
-   After cloning the repository, update submodules to ensure all necessary components are available.
-   ```bash
-   git submodule update --init --recursive
-   ```
 
-3. **Build and Run the Docker Container**:
-   Use Docker Compose to build and start the container:
-   ```bash
-   docker compose up
-   ```
-   This will build the container image and launch the Detector Module.
 
-4. **Accessing the Service**:
-   Once the container is up and running, the Detector Module will be accessible on **port 7000**.
+## ⚙️ Setup Instructions
 
-   - **Documentation**: To view detailed API documentation, navigate to:
-     ```
-     http://127.0.0.1:7000/docs
-     ```
+1. Clone the repository
 
----
+`git clone https://github.com/tymem12/ear-defender-model.git`
 
-## Key Endpoints
+2. Initialize submodules
 
-The Detector Module provides several endpoints, which are accessible via the API documentation. Here are the main endpoints of interest:
+The detector uses external submodules for model implementations.
 
-1. **`/model/run`** - **Main Detection Endpoint**:
-   - This endpoint is used by the connector module of the Ear Defender application to initiate the core detection process.
-   - **Requires Authorization**: A Bearer token is required for access.
-   - **Usage**: This is the primary endpoint for the core functionality of the Detector Module, interacting with the connector to perform detection tasks.
+`git submodule update --init --recursive`
 
-2. **Additional Open Endpoints**:
-   - Other endpoints are accessible to users without authentication. These endpoints are designed to:
-     - Run a specified model for the dataset mentioned in the article (`model/eval_dataset`) and save the results in the `results_csv/{dataset_name}` folder. For this method to work, the `datasets` folder must be created, containing the necessary audio files. All audio files need to be placed inside `datasets`, and the directory structure can be found here: [Google Drive Folder](https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz?usp=sharing).
-      - Access metrics based on datasets mentioned in the related research article (`model/eval_metrics`), from the files stored in the `results_csv/{dataset_name}`. To obtain the metrics referenced in the article, it is not necessary to download the datasets.
-   - The Postman collections contain examples of requests (including their body) that can be used to run predictions on given dataset with the models or calculate metrics from the predictions.
-   - While these endpoints are open to users, they are not utilized by the connector module.
+3. Build & run the service
 
----
+Using Docker Compose:
 
-## Tests:
-- `bash -c "source activate SSL_Spoofing && pytest tests"` - Used to run the tests in the container from the console.
-- `bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"` - Used to test the coverage of the tests (this command includes coverage for the tests belonging to the used submodule `fairseq`).
+`docker compose up`
 
----
+4. Access the API
 
-## References:
-- Submodules and implementations used from:
-   - [SSL_Anti-spoofing](https://github.com/TakHemlata/SSL_Anti-spoofing)
-   - [deepfake-whisper-features](https://github.com/piotrkawa/deepfake-whisper-features)
+The detector runs on port 7000.
 
-- Datasets used for evaluation:
-   - [In_the_wild](https://arxiv.org/abs/2203.16263)
-   - [MLAAD](https://arxiv.org/abs/2401.09512)
-   - [Deep_voice](https://arxiv.org/abs/2308.12734)
+API Docs (Swagger/FastAPI):
+
+👉 http://127.0.0.1:7000/docs
+
+
+## 🔌 Key Endpoints
+
+1. `/model/run` — Main Detection Endpoint
+
+- Used directly by the Connector Module
+
+- Requires Bearer Token authorization
+
+- Performs the core DeepFake detection pipeline
+
+- Returns model prediction results for provided audio
+
+
+
+2. Additional Open Endpoints
+
+These endpoints do not require authentication and are mainly intended for research and evaluation:
+
+`model/eval_dataset` — Runs a chosen model on an entire dataset
+
+Results are saved to:
+
+results_csv/{dataset_name}/
+
+Requires manually preparing the following structure:
+
+```
+datasets/
+  <dataset_name>/
+    audio_files.wav
+```
+
+Dataset structure reference:
+
+👉 https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz
+
+
+`model/eval_metrics` — Computes metrics (e.g., EER) using previously saved predictions
+
+No dataset files needed — only CSV results from results_csv/
+
+These metrics correspond to those referenced in the research article
+
+
+Postman collections (included in the repo) contain ready-to-use request examples.
+
+> These endpoints are not used by the Connector during regular EarDefender operation.
+
+
+
+## 🧪 Tests
+
+Run all tests inside the container:
+
+`bash -c "source activate SSL_Spoofing && pytest tests"`
+
+Run tests with coverage:
+
+`bash -c "source activate SSL_Spoofing && pytest --cov=my_app tests/"`
+
+Coverage includes tests for the embedded fairseq submodule.
+
+
+
+## 📚 References
+
+### Submodules & Implementations
+
+https://github.com/TakHemlata/SSL_Anti-spoofing
+
+https://github.com/piotrkawa/deepfake-whisper-features
+
+
+### Datasets Used
+
+**In_the_wild** — https://arxiv.org/abs/2203.16263
+
+**MLAAD** — https://arxiv.org/abs/2401.09512
+
+**Deep_voice** — https://arxiv.org/abs/2308.12734
 
