@@ -40,7 +40,9 @@ API Docs (Swagger/FastAPI):
 
 ## 🔌 Key Endpoints
 
-1. `/model/run` — Main Detection Endpoint
+### `/model/run`
+
+Main Detection Endpoint
 
 - Used directly by the Connector Module
 
@@ -52,15 +54,13 @@ API Docs (Swagger/FastAPI):
 
 
 
-2. Additional Open Endpoints
 
-These endpoints do not require authentication and are mainly intended for research and evaluation:
-
-`model/eval_dataset` — Runs a chosen model on an entire dataset
+###`model/eval_dataset`
+Runs a chosen model on an entire dataset
 
 Results are saved to:
 
-results_csv/{dataset_name}/
+`results_csv/{dataset_name}/`
 
 Requires manually preparing the following structure:
 
@@ -70,21 +70,23 @@ datasets/
     audio_files.wav
 ```
 
-Dataset structure reference:
+**Dataset structure reference:**
 
 👉 https://drive.google.com/drive/folders/1ZpGWf4Y9DVYWxHGfkRimII0-m6LvZFPz
 
 
-`model/eval_metrics` — Computes metrics (e.g., EER) using previously saved predictions
+### `model/eval_metrics`
+Computes metrics (e.g., EER) using previously saved predictions
 
-No dataset files needed — only CSV results from results_csv/
+No dataset files needed — only CSV results from `results_csv/`
 
 These metrics correspond to those referenced in the research article
 
+### Postman
 
-Postman collections (included in the repo) contain ready-to-use request examples.
+**Postman collections** (included in the repo) contain ready-to-use request examples.
 
-> These endpoints are not used by the Connector during regular EarDefender operation.
+**Only** main endpoint is used by the **Connector** during regular EarDefender operation.
 
 
 
