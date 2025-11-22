@@ -13,23 +13,23 @@ This service operates as an independent Docker container and integrates with the
 
 ## ⚙️ Setup Instructions
 
-1. Clone the repository
+1. **Clone the repository**
 
 `git clone https://github.com/tymem12/ear-defender-model.git`
 
-2. Initialize submodules
+2. **Initialize submodules**
 
 The detector uses external submodules for model implementations.
 
 `git submodule update --init --recursive`
 
-3. Build & run the service
+3. **Build & run the service**
 
 Using Docker Compose:
 
 `docker compose up`
 
-4. Access the API
+4. **Access the API**
 
 The detector runs on port 7000.
 
