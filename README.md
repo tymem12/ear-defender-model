@@ -15,26 +15,21 @@ This service operates as an independent Docker container and integrates with the
 
 1. **Clone the repository**
 
-`git clone https://github.com/tymem12/ear-defender-model.git`
+  `git clone https://github.com/tymem12/ear-defender-model.git`
 
 2. **Initialize submodules**
 
-The detector uses external submodules for model implementations.
-
-`git submodule update --init --recursive`
+  `git submodule update --init --recursive`
 
 3. **Build & run the service**
+   
+  `docker compose up`
 
-Using Docker Compose:
-
-`docker compose up`
-
-4. **Access the API**
+5. **Access the API**
 
 The detector runs on port 7000.
 
-API Docs (Swagger/FastAPI):
-
+### API Docs (Swagger/FastAPI)
 👉 http://127.0.0.1:7000/docs
 
 
@@ -55,7 +50,7 @@ Main Detection Endpoint
 
 
 
-###`model/eval_dataset`
+### `model/eval_dataset`
 Runs a chosen model on an entire dataset
 
 Results are saved to:
